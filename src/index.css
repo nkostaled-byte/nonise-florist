@@ -1,0 +1,535 @@
+@import "tailwindcss";
+
+@theme {
+  /* Artisanal Botanical Boutique — Authoritative DESIGN.md Tokens */
+  --color-cream: #FBF9F5;
+  --color-surface: #FBF9F5;
+  --color-surface-low: #F5F3EF;
+  --color-surface-container: #EFEEEA;
+  --color-surface-high: #EAE8E4;
+  --color-champagne: #F7EFE3;
+  --color-border-cream: #EFE8DC;
+
+  --color-rose: #AB274A;
+  --color-rose-bright: #D84A6A;
+  --color-rose-hover: #931E3E;
+  --color-rose-deep: #AB274A;
+  --color-rose-soft: #E87A90;
+  --color-rose-blush: #FFD9DD;
+
+  --color-forest: #48654C;
+  --color-forest-deep: #3E5B42;
+  --color-forest-soft: #C7E8C8;
+  --color-moss: #688A58;
+
+  --color-plum: #2F1B2E;
+  --color-plum-soft: #6D546A;
+  --color-plum-muted: #584144;
+  --color-outline-plum: #8B7073;
+
+  --color-gold: #C5A059;
+  --color-ink: #1B1C1A;
+  --color-charcoal: #3D3A39;
+
+  --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --shadow-ambient: 0 12px 32px -4px rgba(47, 27, 46, 0.06);
+  --shadow-hover: 0 20px 40px -8px rgba(47, 27, 46, 0.11);
+  --shadow-drawer: -12px 0 40px rgba(47, 27, 46, 0.14);
+}
+
+/* ==========================================================================
+   NONISE FLORIST — GLOBAL EDITORIAL MOTION TOKENS
+   Restrained, weighted easing & responsive timing scaled for desktop/mobile
+   ========================================================================== */
+:root {
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur-fast: 220ms;
+  --dur-base: 380ms;
+  --dur-reveal: 680ms;
+  --dur-image: 780ms;
+  --reveal-dist: 16px;
+  --stagger-scale: 1;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --dur-reveal: 560ms;
+    --dur-image: 660ms;
+    --reveal-dist: 12px;
+    --stagger-scale: 0.72;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --dur-base: 300ms;
+    --dur-reveal: 460ms;
+    --dur-image: 540ms;
+    --reveal-dist: 8px;
+    --stagger-scale: 0.55;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+  }
+
+  h1, h2, h3, h4, .font-editorial {
+    font-family: var(--font-serif);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 2px;
+  }
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Editorial Links & Underlines */
+.link-gold {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  transition: color var(--dur-fast) var(--ease-editorial);
+}
+
+.link-gold::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-gold);
+  transform: scaleX(0.45);
+  transform-origin: left;
+  transition: transform 300ms var(--ease-editorial);
+}
+
+.link-gold:hover::after,
+.link-gold:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.link-gold svg {
+  transition: transform 260ms var(--ease-editorial);
+}
+
+.link-gold:hover svg {
+  transform: translateX(3px);
+}
+
+.nav-link-underline {
+  position: relative;
+}
+
+.nav-link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1.5px;
+  background-color: var(--color-gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms var(--ease-editorial);
+}
+
+.nav-link-underline:hover::after,
+.nav-link-underline:focus-visible::after,
+.nav-link-underline[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+.footer-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  transition: color var(--dur-fast) var(--ease-editorial);
+}
+
+.footer-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background-color: rgba(197, 160, 89, 0.75);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms var(--ease-editorial);
+}
+
+.footer-link:hover::after,
+.footer-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Tactile Editorial Buttons & Form Fields */
+.btn-editorial {
+  transition:
+    transform var(--dur-fast) var(--ease-editorial),
+    background-color var(--dur-fast) var(--ease-editorial),
+    border-color var(--dur-fast) var(--ease-editorial),
+    color var(--dur-fast) var(--ease-editorial),
+    box-shadow var(--dur-fast) var(--ease-editorial);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-editorial:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+.btn-editorial:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.input-editorial {
+  transition:
+    border-color var(--dur-fast) var(--ease-editorial),
+    background-color var(--dur-fast) var(--ease-editorial),
+    box-shadow var(--dur-fast) var(--ease-editorial);
+}
+
+.input-editorial:focus {
+  border-color: var(--color-forest-deep);
+  box-shadow: 0 0 0 3px rgba(72, 101, 76, 0.11);
+}
+
+/* Floral Cards & Photography Zoom */
+.card-floral {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border-cream);
+  transition:
+    transform 320ms var(--ease-editorial),
+    box-shadow 320ms var(--ease-editorial),
+    border-color 320ms var(--ease-editorial);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-floral:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(197, 160, 89, 0.55);
+  }
+}
+
+.img-zoom {
+  transition: transform 700ms var(--ease-editorial);
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .img-zoom {
+    transform: scale(1.035);
+  }
+}
+
+/* ==========================================================================
+   PAGE TRANSITIONS & OVERLAYS
+   ========================================================================== */
+@keyframes page-enter-kf {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.page-enter {
+  animation: page-enter-kf var(--dur-base) var(--ease-editorial) both;
+}
+
+@keyframes fade-in-up-sm {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.toast-enter {
+  animation: fade-in-up-sm 280ms var(--ease-editorial) both;
+}
+
+.pdp-image-swap {
+  animation: fade-in-soft 340ms var(--ease-editorial) both;
+}
+
+@keyframes fade-in-soft {
+  from {
+    opacity: 0.35;
+    transform: scale(1.015);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Modal & Lightbox Transitions */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.modal-backdrop-enter {
+  animation: modal-backdrop-in 240ms var(--ease-soft) both;
+}
+
+.modal-panel-enter {
+  animation: modal-panel-in 320ms var(--ease-editorial) both;
+}
+
+/* Slide-Over Drawers (Mobile Nav & Shopping Bag) */
+.drawer-backdrop {
+  transition: opacity 280ms var(--ease-soft);
+}
+
+.drawer-panel-right {
+  transition: transform 340ms var(--ease-editorial);
+}
+
+/* ==========================================================================
+   HERO CHOREOGRAPHED INITIAL ENTRANCE (One-Shot on Mount)
+   1. Background -> 2. Logo -> 3. Main Headline -> 4. Italic Line -> 5. CTAs
+   ========================================================================== */
+@keyframes hero-bg-in {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.hero-enter-bg {
+  animation: hero-bg-in 680ms var(--ease-soft) both;
+}
+
+.hero-enter-logo {
+  animation: hero-rise-in 640ms var(--ease-editorial) 120ms both;
+}
+
+.hero-enter-line-1 {
+  animation: hero-rise-in 680ms var(--ease-editorial) 240ms both;
+}
+
+.hero-enter-line-2 {
+  animation: hero-rise-in 680ms var(--ease-editorial) 390ms both;
+}
+
+.hero-enter-cta {
+  animation: hero-rise-in 640ms var(--ease-editorial) 520ms both;
+}
+
+/* ==========================================================================
+   VIEWPORT SCROLL REVEAL SYSTEM & EDITORIAL IMAGE REVEALS
+   ========================================================================== */
+.reveal-block {
+  transition-property: opacity, transform;
+  transition-duration: var(--dur-reveal);
+  transition-timing-function: var(--ease-editorial);
+  transition-delay: calc(var(--reveal-delay, 0ms) * var(--stagger-scale));
+}
+
+.reveal-hidden {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-dist), 0);
+}
+
+.reveal-hidden-fade {
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Reusable Image Clip & Gentle 1.03 -> 1.0 Scale Unveil */
+.img-reveal-shell {
+  overflow: hidden;
+}
+
+.img-reveal-frame {
+  width: 100%;
+  height: 100%;
+  transition-property: opacity, transform, clip-path;
+  transition-duration: var(--dur-image);
+  transition-timing-function: var(--ease-editorial);
+  transition-delay: calc(var(--reveal-delay, 0ms) * var(--stagger-scale));
+  will-change: transform, opacity;
+}
+
+.img-reveal-hidden {
+  opacity: 0;
+  transform: scale(1.032);
+  clip-path: inset(4% 0 0 0);
+}
+
+.img-reveal-visible {
+  opacity: 1;
+  transform: scale(1);
+  clip-path: inset(0 0 0 0);
+}
+
+/* Bag Badge Micro-Feedback */
+@keyframes bag-pop-kf {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.bag-pop {
+  animation: bag-pop-kf 340ms var(--ease-editorial);
+}
+
+.tabular-price {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   CONTINUOUS GPU ROSE-PETAL FLOATING MOTION
+   ========================================================================== */
+@keyframes petal-drift {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0) rotate(var(--base-rot, 0deg));
+  }
+  33% {
+    transform: translate3d(var(--float-x, 8px), var(--float-y, -10px), 0)
+      rotate(calc(var(--base-rot, 0deg) + var(--float-rot, 6deg)));
+  }
+  66% {
+    transform: translate3d(calc(var(--float-x, 8px) * -0.55), calc(var(--float-y, -10px) * 0.65), 0)
+      rotate(calc(var(--base-rot, 0deg) - var(--float-rot, 6deg) * 0.6));
+  }
+}
+
+.petal-float {
+  animation-name: petal-drift;
+  animation-duration: var(--float-dur, 11s);
+  animation-delay: var(--float-delay, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   PREFERS-REDUCED-MOTION ACCESSIBILITY OVERRIDES
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .card-floral,
+  .img-zoom,
+  .link-gold::after,
+  .link-gold svg,
+  .nav-link-underline::after,
+  .footer-link::after,
+  .btn-editorial,
+  .drawer-backdrop,
+  .drawer-panel-right {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .reveal-block,
+  .img-reveal-frame {
+    transition: opacity 180ms linear !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .page-enter,
+  .toast-enter,
+  .pdp-image-swap,
+  .modal-backdrop-enter,
+  .modal-panel-enter,
+  .hero-enter-bg,
+  .hero-enter-logo,
+  .hero-enter-line-1,
+  .hero-enter-line-2,
+  .hero-enter-cta,
+  .bag-pop {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .petal-float {
+    animation: none !important;
+    transform: rotate(var(--base-rot, 0deg)) !important;
+  }
+}
