@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -9,7 +9,7 @@ import {
   Store,
   Truck,
 } from 'lucide-react';
-import { BUSINESS_INFO, formatZAR } from '../data/noniseData';
+import { BUSINESS_INFO, CHECKOUT_ADDONS, formatZAR } from '../data/noniseData';
 import { CartItem, ConfirmedOrder } from '../types';
 import { RevealSection } from '../components/RevealSection';
 
@@ -42,12 +42,24 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   onBackToShop,
   onOrderConfirmed,
 }) => {
-  const upcomingDates = useMemo(() => getUpcomingTradingDates(6), []);
-  const prefilledDate = items.find((i) => i.deliveryDate)?.deliveryDate ?? upcomingDates[0].iso;
+  const [upcomingDates, setUpcomingDates] = useState<ReturnType<typeof getUpcomingTradingDates>>(
+    []
+  );
+  const prefilledDate = items.find((i) => i.deliveryDate)?.deliveryDate ?? upcomingDates[0]?.iso ?? '';
   const prefilledCard = items.find((i) => i.giftMessage)?.giftMessage ?? '';
 
   const [fulfillment, setFulfillment] = useState<'delivery' | 'collection'>('delivery');
   const [deliveryDate, setDeliveryDate] = useState(prefilledDate);
+
+  useEffect(() => {
+    setUpcomingDates(getUpcomingTradingDates(6));
+  }, []);
+
+  useEffect(() => {
+    if (deliveryDate) return;
+    const preferred = items.find((i) => i.deliveryDate)?.deliveryDate ?? upcomingDates[0]?.iso;
+    if (preferred) setDeliveryDate(preferred);
+  }, [deliveryDate, items, upcomingDates]);
   const [timeWindow, setTimeWindow] = useState('Morning (8:30 AM – 12:30 PM)');
 
   const [senderName, setSenderName] = useState('');
@@ -61,6 +73,20 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   const [cardMessage, setCardMessage] = useState(prefilledCard);
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [addonIds, setAddonIds] = useState<string[]>([]);
+
+  const selectedAddons = CHECKOUT_ADDONS.filter((addon) => addonIds.includes(addon.id));
+  const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.priceZAR, 0);
+  const orderTotal = subtotal + addonsTotal;
+
+  const toggleAddon = (id: string) => {
+    setAddonIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
+
+  useEffect(() => {
+    const preferred = items.find((i) => i.giftMessage)?.giftMessage;
+    if (preferred) setCardMessage((prev) => prev || preferred);
+  }, [items]);
   const [confirmedOrder, setConfirmedOrder] = useState<ConfirmedOrder | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
 
@@ -94,7 +120,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       cardMessage: cardMessage.trim() || undefined,
       specialInstructions: specialInstructions.trim() || undefined,
       items: [...items],
+      addons: selectedAddons,
       subtotalZAR: subtotal,
+      totalZAR: orderTotal,
     };
 
     setConfirmedOrder(order);
@@ -105,10 +133,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     const itemsSummary = confirmedOrder.items
       .map((i) => `${i.quantity}x ${i.product.name} (${formatZAR(i.product.priceZAR * i.quantity)})`)
       .join(', ');
+    const addonsSummary = confirmedOrder.addons
+      ?.map((addon) => `${addon.label} (${formatZAR(addon.priceZAR)})`)
+      .join(', ');
     const summaryText = [
       `Nonise Florist Order Request #${confirmedOrder.reference}`,
       `Items: ${itemsSummary}`,
+      addonsSummary ? `Add-ons: ${addonsSummary}` : '',
       `Subtotal: ${formatZAR(confirmedOrder.subtotalZAR)}`,
+      `Total: ${formatZAR(confirmedOrder.totalZAR)}`,
       `Fulfilment: ${
         confirmedOrder.fulfillment === 'delivery'
           ? `Local Delivery to ${confirmedOrder.deliveryAddress}, ${confirmedOrder.suburb} (Recipient: ${confirmedOrder.recipientName}, ${confirmedOrder.recipientPhone})`
@@ -198,7 +231,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             </div>
 
             <div className="border-t border-[#EFE8DC] pt-5 space-y-3">
-              <p className="eyebrow text-[#3E5B42]">Items Ordered</p>
+              <p className="eyebrow text-[#3E5B42]">Items &amp; Add-ons Ordered</p>
               <ul className="divide-y divide-[#EFE8DC] text-[14px]">
                 {confirmedOrder.items.map((item) => (
                   <li key={item.cartKey} className="py-2.5 flex items-center justify-between gap-4">
@@ -210,10 +243,32 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     </span>
                   </li>
                 ))}
+                {confirmedOrder.addons?.map((addon) => (
+                  <li key={addon.id} className="py-2.5 flex items-center justify-between gap-4">
+                    <span className="text-[#2F1B2E]">{addon.label}</span>
+                    <span className="font-semibold text-[#1B1C1A] tabular-price">
+                      {formatZAR(addon.priceZAR)}
+                    </span>
+                  </li>
+                ))}
               </ul>
-              <div className="pt-3 border-t border-[#EFE8DC] flex items-center justify-between text-[16px] font-semibold text-[#2F1B2E]">
-                <span>Order Subtotal</span>
-                <span className="tabular-price">{formatZAR(confirmedOrder.subtotalZAR)}</span>
+              <div className="pt-3 border-t border-[#EFE8DC] space-y-1.5 text-[14px]">
+                <div className="flex items-center justify-between text-[#584144]">
+                  <span>Arrangements Subtotal</span>
+                  <span className="tabular-price">{formatZAR(confirmedOrder.subtotalZAR)}</span>
+                </div>
+                {confirmedOrder.addons && confirmedOrder.addons.length > 0 && (
+                  <div className="flex items-center justify-between text-[#584144]">
+                    <span>Add-ons</span>
+                    <span className="tabular-price">
+                      {formatZAR(confirmedOrder.totalZAR - confirmedOrder.subtotalZAR)}
+                    </span>
+                  </div>
+                )}
+                <div className="pt-1.5 border-t border-[#EFE8DC] flex items-center justify-between text-[16px] font-semibold text-[#2F1B2E]">
+                  <span>Order Total</span>
+                  <span className="tabular-price">{formatZAR(confirmedOrder.totalZAR)}</span>
+                </div>
               </div>
             </div>
 
@@ -391,7 +446,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         id="checkout-custom-date"
                         type="date"
                         required
-                        min={upcomingDates[0].iso}
+                        min={upcomingDates[0]?.iso}
                         value={deliveryDate}
                         onChange={(e) => setDeliveryDate(e.target.value)}
                         className="input-editorial w-full pl-9 pr-3 py-2.5 min-h-[42px] text-[14px] bg-white border border-[#EFE8DC] rounded-sm text-[#1B1C1A] focus:outline-none"
@@ -657,6 +712,43 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               ))}
             </ul>
 
+            <div className="border-t border-[#EFE8DC] pt-4">
+              <p className="eyebrow text-[#3E5B42]">Add a Little Extra</p>
+              <p className="text-[12px] text-[#584144] mt-1">
+                Optional finishing touches — your total updates as you select.
+              </p>
+              <ul className="mt-3 space-y-2">
+                {CHECKOUT_ADDONS.map((addon) => {
+                  const checked = addonIds.includes(addon.id);
+                  return (
+                    <li key={addon.id}>
+                      <label
+                        className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-sm border cursor-pointer transition-colors ${
+                          checked
+                            ? 'border-[#3E5B42] bg-[#F3F6F1]'
+                            : 'border-[#EFE8DC] bg-[#FDFBF7] hover:border-[#C5A059]'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAddon(addon.id)}
+                            className="w-4 h-4 accent-[#3E5B42]"
+                          />
+                          <span className="text-[13px] text-[#2F1B2E]">{addon.label}</span>
+                        </span>
+                        <span className="text-[13px] font-semibold text-[#1B1C1A] tabular-price">
+                          {addon.fromPrice ? 'From ' : ''}
+                          {formatZAR(addon.priceZAR)}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
             <div className="border-t border-[#EFE8DC] pt-4 space-y-2 text-[14px]">
               <div className="flex justify-between text-[#584144]">
                 <span>Arrangements Subtotal</span>
@@ -664,6 +756,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   {formatZAR(subtotal)}
                 </span>
               </div>
+              {addonsTotal > 0 && (
+                <div className="flex justify-between text-[#584144]">
+                  <span>Add-ons</span>
+                  <span className="font-medium text-[#1B1C1A] tabular-price">
+                    {formatZAR(addonsTotal)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-[#584144]">
                 <span>
                   {fulfillment === 'collection' ? 'Studio Collection' : 'Local Delivery Fee'}
@@ -676,7 +776,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               </div>
               <div className="pt-3 border-t border-[#EFE8DC] flex justify-between text-[17px] font-semibold text-[#2F1B2E]">
                 <span>Estimated Total</span>
-                <span className="tabular-price">{formatZAR(subtotal)}</span>
+                <span className="tabular-price">{formatZAR(orderTotal)}</span>
               </div>
             </div>
 
@@ -695,7 +795,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               type="submit"
               className="btn-editorial w-full py-3.5 px-6 rounded-sm bg-[#D84A6A] text-white text-[14px] font-semibold tracking-[0.04em] hover:bg-[#C43D5C] cursor-pointer"
             >
-              Confirm Order Request &middot; {formatZAR(subtotal)}
+              Confirm Order Request &middot; {formatZAR(orderTotal)}
             </button>
           </aside>
         </form>

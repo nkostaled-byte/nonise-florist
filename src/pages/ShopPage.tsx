@@ -1,12 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react';
-import { PRODUCTS } from '../data/noniseData';
+import { PRODUCTS, ROSE_SIZE_GUIDE, ROSE_SIZE_PRODUCTS } from '../data/noniseData';
+import { LANDING_LINKS, LANDING_PAGES } from '../data/landingPages';
+import { RouteState, pathFor } from '../lib/routes';
 import { Product, SpecialtyKey } from '../types';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { ProductCard } from '../components/ProductCard';
 import { RevealSection } from '../components/RevealSection';
 
 interface ShopPageProps {
   initialFilter: SpecialtyKey;
+  onNavigateRoute?: (route: RouteState) => void;
+  onSelectCategory: (filter: SpecialtyKey) => void;
   onSelectProduct: (product: Product) => void;
   onQuickAdd: (product: Product) => void;
   onStartInquiry: (topic: string) => void;
@@ -14,15 +19,166 @@ interface ShopPageProps {
 
 const FILTER_TABS: { key: SpecialtyKey; label: string }[] = [
   { key: 'all', label: 'All Arrangements' },
-  { key: 'roses', label: 'Roses Made for Moments' },
-  { key: 'seasonal', label: 'Seasonal & Indigenous' },
-  { key: 'gifting', label: 'Roses & Chocolates' },
+  { key: 'box-arrangements', label: 'Box Arrangements' },
+  { key: 'rose-bouquets', label: 'Rose Bouquets' },
+  { key: 'mixed-bouquets', label: 'Mixed Bouquets' },
+  { key: 'protea-bouquets', label: 'Protea Bouquets' },
+  { key: 'vase-arrangements', label: 'Vase Arrangements' },
+  { key: 'hampers', label: 'Hamper' },
+  { key: 'funeral-flowers', label: 'Funeral Flowers' },
+  { key: 'funeral-package-sets', label: 'Funeral Packages' },
 ];
+
+const SHOP_HEADINGS: Record<
+  Exclude<SpecialtyKey, 'events'>,
+  { eyebrow: string; h1: string; intro: string }
+> = {
+  all: {
+    eyebrow: 'Fresh Flowers & Bouquets',
+    h1: 'Flower Bouquets & Roses in Pietermaritzburg',
+    intro:
+      'Browse Nonise Florist’s curated collection of hand-tied bouquets, roses and floral gifts, crafted fresh in our Pietermaritzburg studio. Add a handwritten gift message or choose a delivery date at checkout.',
+  },
+  'box-arrangements': {
+    eyebrow: 'Box Arrangements',
+    h1: 'Flower Box Arrangements in Pietermaritzburg',
+    intro:
+      'Hand-arranged hatboxes and flower boxes for birthdays, anniversaries and thoughtful gifting, delivered fresh across Pietermaritzburg.',
+  },
+  'funeral-flowers': {
+    eyebrow: 'Funeral Flowers',
+    h1: 'Funeral Flowers & Tributes in Pietermaritzburg',
+    intro:
+      'Coffin sprays, crosses, posies and upright tributes crafted with compassion and delivered to services across Pietermaritzburg.',
+  },
+  'funeral-package-sets': {
+    eyebrow: 'Funeral Package Sets',
+    h1: 'Funeral Flower Packages in Pietermaritzburg',
+    intro:
+      'Coordinated funeral flower packages with sprays, posies and standing tributes, arranged together with your funeral parlour.',
+  },
+  hampers: {
+    eyebrow: 'Hamper',
+    h1: 'Gift Hampers in Pietermaritzburg',
+    intro:
+      'Curated hampers of chocolates, treats and beverages for birthdays, celebrations, corporate gifting and thank-yous.',
+  },
+  'mixed-bouquets': {
+    eyebrow: 'Mixed Bouquets',
+    h1: 'Mixed Flower Bouquets in Pietermaritzburg',
+    intro:
+      'Fresh mixed bouquets hand-tied daily with seasonal stems, ready for local delivery across Pietermaritzburg.',
+  },
+  'protea-bouquets': {
+    eyebrow: 'Protea Bouquets',
+    h1: 'Protea Bouquets in Pietermaritzburg',
+    intro:
+      'Indigenous protea bouquets with pincushions and textured foliage, hand-tied in our Pietermaritzburg studio.',
+  },
+  'rose-bouquets': {
+    eyebrow: 'Rose Bouquets',
+    h1: 'Rose Bouquets in Pietermaritzburg',
+    intro:
+      'Fresh rose bouquets from classic reds to ivory and blush, hand-tied for anniversaries, birthdays and romance.',
+  },
+  'vase-arrangements': {
+    eyebrow: 'Vase Arrangements',
+    h1: 'Flower Vase Arrangements in Pietermaritzburg',
+    intro:
+      'Ready-to-display flower arrangements in clear glass vases, delivered fresh across Pietermaritzburg.',
+  },
+};
+
+const RoseSizeGuide: React.FC<{ onQuickAdd: (product: Product) => void }> = ({
+  onQuickAdd,
+}) => (
+  <RevealSection className="mb-10">
+    <div className="bg-white border border-[#EFE8DC] rounded-sm p-5 sm:p-7">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+        <div>
+          <p className="eyebrow text-[#AB274A]">Compare Rose Options</p>
+          <h2 className="font-editorial text-[24px] sm:text-[28px] text-[#2F1B2E] mt-1">
+            Rose Sizes &amp; Prices
+          </h2>
+        </div>
+        <p className="text-[12px] text-[#8B7073]">
+          Prices per arrangement &middot; select a price to add to bag
+        </p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px] text-left border-collapse">
+          <thead>
+            <tr className="border-b border-[#EFE8DC]">
+              <th
+                scope="col"
+                className="py-2.5 pr-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#8B7073]"
+              >
+                Arrangement
+              </th>
+              {ROSE_SIZE_GUIDE.sizes.map((size) => (
+                <th
+                  key={size}
+                  scope="col"
+                  className="py-2.5 px-2 text-center text-[12px] font-semibold uppercase tracking-[0.12em] text-[#8B7073]"
+                >
+                  {size} Roses
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ROSE_SIZE_GUIDE.rows.map((row) => (
+              <tr key={row.arrangement} className="border-b border-[#EFE8DC]/70 last:border-0">
+                <th
+                  scope="row"
+                  className="py-3 pr-4 text-[14px] font-medium text-[#2F1B2E] whitespace-nowrap"
+                >
+                  {row.arrangement}
+                </th>
+                {row.prices.map((price, index) => (
+                  <td key={ROSE_SIZE_GUIDE.sizes[index]} className="py-2 px-1.5 text-center">
+                    <button
+                      type="button"
+                      aria-label={`Add ${ROSE_SIZE_GUIDE.sizes[index]} ${row.arrangement} to bag`}
+                      onClick={() => {
+                        const product = ROSE_SIZE_PRODUCTS.find(
+                          (item) =>
+                            item.slug === `${row.slugBase}-${ROSE_SIZE_GUIDE.sizes[index]}`
+                        );
+                        if (product) onQuickAdd(product);
+                      }}
+                      className="btn-editorial w-full px-2 py-2 rounded-sm border border-[#EFE8DC] text-[13px] font-semibold tabular-price text-[#2F1B2E] hover:border-[#AB274A] hover:bg-[#F7EFE3] transition-colors cursor-pointer"
+                    >
+                      R{price.toLocaleString('en-ZA')}
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[12px] text-[#584144]">
+        <span className="font-semibold text-[#2F1B2E]">Also available:</span>
+        {ROSE_SIZE_GUIDE.extras.map((extra) => (
+          <span key={extra.label}>
+            {extra.label}{' '}
+            <span className="font-semibold text-[#2F1B2E]">{extra.price}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  </RevealSection>
+);
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc';
 
 export const ShopPage: React.FC<ShopPageProps> = ({
   initialFilter,
+  onNavigateRoute,
+  onSelectCategory,
   onSelectProduct,
   onQuickAdd,
   onStartInquiry,
@@ -32,6 +188,19 @@ export const ShopPage: React.FC<ShopPageProps> = ({
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const headings = SHOP_HEADINGS[activeFilter === 'events' ? 'all' : activeFilter];
+
+  const breadcrumbItems =
+    activeFilter === 'all'
+      ? [
+          { label: 'Home', route: { view: 'home' } as RouteState },
+          { label: 'Shop' },
+        ]
+      : [
+          { label: 'Home', route: { view: 'home' } as RouteState },
+          { label: 'Shop', route: { view: 'shop', specialty: 'all' } as RouteState },
+          { label: headings.eyebrow },
+        ];
 
   const filteredProducts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -60,15 +229,42 @@ export const ShopPage: React.FC<ShopPageProps> = ({
       {/* Page Header */}
       <section className="bg-[#F7EFE3]/70 border-b border-[#EFE8DC]">
         <RevealSection immediate className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 py-12 md:py-16">
-          <p className="eyebrow text-[#3E5B42]">Everyday Bouquets &amp; Flower Gifting</p>
+          <Breadcrumbs
+            items={breadcrumbItems}
+            onNavigateRoute={onNavigateRoute}
+            className="mb-5"
+          />
+          <p className="eyebrow text-[#3E5B42]">{headings.eyebrow}</p>
           <h1 className="font-editorial text-[34px] sm:text-[44px] font-semibold text-[#2F1B2E] leading-tight mt-2">
-            Shop Floral Arrangements
+            {headings.h1}
           </h1>
           <p className="text-[15px] sm:text-[16px] text-[#584144] mt-3 max-w-2xl leading-relaxed">
-            Browse Nonise Florist’s curated online collection crafted fresh in Pietermaritzburg.
-            Select any design to add a complimentary handwritten gift message or preferred delivery
-            date.
+            {headings.intro}
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
+            <span className="text-[#8B7073]">Looking for:</span>
+            {LANDING_LINKS.map((link) => {
+              const href = LANDING_PAGES[link.slug].path;
+              return (
+                <a
+                  key={link.slug}
+                  href={href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onNavigateRoute) {
+                      onNavigateRoute({ view: 'landing', landingSlug: link.slug });
+                    } else {
+                      window.location.href = href;
+                    }
+                  }}
+                  className="link-gold text-[#2F1B2E] hover:text-[#AB274A] cursor-pointer"
+                >
+                  <span>{link.label}</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </a>
+              );
+            })}
+          </div>
         </RevealSection>
       </section>
 
@@ -76,16 +272,19 @@ export const ShopPage: React.FC<ShopPageProps> = ({
       <section className="border-b border-[#EFE8DC] bg-white">
         <div className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Interactive Filter Controls */}
-          <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Filter arrangements">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter arrangements">
             {FILTER_TABS.map((tab) => {
               const active = activeFilter === tab.key;
               return (
-                <button
+                <a
                   key={tab.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setActiveFilter(tab.key)}
+                  href={pathFor({ view: 'shop', specialty: tab.key })}
+                  aria-current={active ? 'page' : undefined}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveFilter(tab.key);
+                    onSelectCategory(tab.key);
+                  }}
                   className={`btn-editorial px-4 py-2 min-h-[40px] rounded-full text-[13px] font-semibold tracking-[0.02em] whitespace-nowrap cursor-pointer ${
                     active
                       ? 'bg-[#2F1B2E] text-white'
@@ -93,7 +292,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                   }`}
                 >
                   {tab.label}
-                </button>
+                </a>
               );
             })}
           </div>
@@ -147,6 +346,8 @@ export const ShopPage: React.FC<ShopPageProps> = ({
 
       {/* Product Grid */}
       <section className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 py-12 md:py-16">
+        {activeFilter === 'rose-bouquets' && <RoseSizeGuide onQuickAdd={onQuickAdd} />}
+
         <div className="flex items-center justify-between mb-6 text-[13px] text-[#584144]">
           <p className="tabular-price">
             Showing <strong className="text-[#2F1B2E]">{filteredProducts.length}</strong> of{' '}
@@ -158,6 +359,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
               onClick={() => {
                 setActiveFilter('all');
                 setSearchQuery('');
+                if (activeFilter !== 'all') onSelectCategory('all');
               }}
               className="text-[#AB274A] font-semibold hover:underline cursor-pointer"
             >
@@ -178,10 +380,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setActiveFilter('all');
-                  setSearchQuery('');
-                }}
+                onClick={() => onSelectCategory('all')}
                 className="btn-editorial px-5 py-2.5 rounded-sm bg-[#2F1B2E] text-white text-[13px] font-semibold cursor-pointer"
               >
                 View All Arrangements

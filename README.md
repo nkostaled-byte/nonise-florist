@@ -35,6 +35,11 @@ Pietermaritzburg's heartfelt floral boutique led by Mrs. Nokwanda Mthembu — fr
 - `npm run preview` — preview the production build
 - `npm run lint` — type-check the project
 
+## Content Notes
+
+- Product photos and product names are kept in sync: the primary image file is named after the product slug (e.g. `spring-garden-hatbox.webp` for "Spring Garden Hatbox").
+- The gallery currently reuses every product photo. If the florist prefers those images to appear only on product pages, set `INCLUDE_CATALOGUE_IN_GALLERY = false` in `src/data/noniseData.ts`.
+
 ## Environment Variables
 
 | Variable | Description |

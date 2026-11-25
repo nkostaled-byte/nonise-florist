@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -10,13 +10,17 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { BUSINESS_INFO, PRODUCTS, formatZAR } from '../data/noniseData';
+import { responsiveImage } from '../lib/imageManifest';
 import { Product } from '../types';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { ProductCard } from '../components/ProductCard';
 import { RevealSection } from '../components/RevealSection';
+import { RouteState } from '../lib/routes';
 
 interface ProductDetailPageProps {
   product: Product;
   onBackToShop: () => void;
+  onNavigateRoute?: (route: RouteState) => void;
   onSelectProduct: (product: Product) => void;
   onAddToCart: (
     product: Product,
@@ -28,6 +32,7 @@ interface ProductDetailPageProps {
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   product,
   onBackToShop,
+  onNavigateRoute,
   onSelectProduct,
   onAddToCart,
 }) => {
@@ -38,7 +43,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<'delivery' | 'care' | null>('delivery');
 
-  const todayISO = new Date().toISOString().split('T')[0];
+  const [todayISO, setTodayISO] = useState('');
+  useEffect(() => {
+    setTodayISO(new Date().toISOString().split('T')[0]);
+  }, []);
+  const activeImageSrc = product.images[selectedImageIndex] ?? product.images[0];
+  const activeImageAttrs = responsiveImage(activeImageSrc);
 
   const relatedProducts = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
 
@@ -67,9 +77,15 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             />
             <span>Back to Shop</span>
           </button>
-          <span className="text-[#8B7073] hidden sm:inline truncate">
-            Shop / {product.wooCategory} / <strong className="text-[#2F1B2E]">{product.name}</strong>
-          </span>
+          <Breadcrumbs
+            items={[
+              { label: 'Home', route: { view: 'home' } },
+              { label: 'Shop', route: { view: 'shop', specialty: 'all' } },
+              { label: product.name },
+            ]}
+            onNavigateRoute={onNavigateRoute}
+            className="hidden sm:block"
+          />
         </div>
       </div>
 
@@ -81,8 +97,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             <div className="aspect-[4/5] w-full rounded-sm overflow-hidden border border-[#EFE8DC] bg-[#F5F3EF]">
               <img
                 key={`${product.id}-${selectedImageIndex}`}
-                src={product.images[selectedImageIndex] ?? product.images[0]}
-                alt={product.name}
+                {...activeImageAttrs}
+                src={activeImageSrc}
+                alt={product.altText || product.name}
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 loading="eager"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover pdp-image-swap"
@@ -104,8 +122,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     }`}
                   >
                     <img
+                      {...responsiveImage(imgSrc)}
                       src={imgSrc}
-                      alt={`${product.name} angle ${idx + 1}`}
+                      alt={`${product.altText || product.name} angle ${idx + 1}`}
+                      sizes="(min-width: 1024px) 12vw, 25vw"
+                      loading="lazy"
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
                     />
@@ -175,7 +196,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     <input
                       id="pdp-delivery-date"
                       type="date"
-                      min={todayISO}
+                      min={todayISO || undefined}
                       value={deliveryDate}
                       onChange={(e) => setDeliveryDate(e.target.value)}
                       className="input-editorial w-full pl-10 pr-4 py-2.5 text-[14px] bg-[#FDFBF7] border border-[#EFE8DC] rounded-sm text-[#1B1C1A] focus:bg-white focus:outline-none"

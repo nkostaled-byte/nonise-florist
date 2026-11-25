@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /cart
+Disallow: /api/
+
+Sitemap: https://noniseflorist.com/sitemap.xml

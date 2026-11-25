@@ -1,0 +1,161 @@
+export interface ImageMeta {
+  width: number;
+  height: number;
+  has640: boolean;
+}
+
+export const IMAGE_META: Record<string, ImageMeta> = {
+  "/assets/floral/Garden%20Path%20day.webp": { width: 1600, height: 900, has640: true },
+  "/assets/floral/Garden%20Path%20night.webp": { width: 1600, height: 900, has640: true },
+  "/assets/floral/rose-petal-01_ad2a55ac.webp": { width: 435, height: 359, has640: false },
+  "/assets/floral/rose-petal-02_40ce3f70.webp": { width: 431, height: 387, has640: false },
+  "/assets/floral/rose-petal-03_e3c5dac0.webp": { width: 394, height: 342, has640: false },
+  "/assets/floral/rose-petal-04_f4358a0f.webp": { width: 415, height: 358, has640: false },
+  "/assets/floral/rose-petal-05_da2ed567.webp": { width: 422, height: 378, has640: false },
+  "/assets/floral/rose-petal-06_310da143.webp": { width: 375, height: 322, has640: false },
+  "/assets/floral/rose-petal-07_6c10f9ac.webp": { width: 438, height: 361, has640: false },
+  "/assets/floral/rose-petal-08_9ce1785e.webp": { width: 405, height: 337, has640: false },
+  "/assets/floral/rose-petal-09_c8dc575a.webp": { width: 454, height: 345, has640: false },
+  "/assets/nonise/about-feature.webp": { width: 830, height: 706, has640: true },
+  "/assets/nonise/contact-floral.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-1.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-10.webp": { width: 1600, height: 1091, has640: true },
+  "/assets/nonise/gallery-11.webp": { width: 1600, height: 1066, has640: true },
+  "/assets/nonise/gallery-2.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-3.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-4.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-5.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-6.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/gallery-7.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/gallery-8.webp": { width: 1600, height: 1521, has640: true },
+  "/assets/nonise/hero.webp": { width: 1312, height: 1199, has640: true },
+  "/assets/nonise/home-hero-roses.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/home-specialty-1.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/logo.webp": { width: 320, height: 320, has640: false },
+  "/assets/nonise/nokwanda-mthembu.webp": { width: 1159, height: 864, has640: true },
+  "/assets/nonise/portfolio-box-pink-mixed.webp": { width: 960, height: 935, has640: true },
+  "/assets/nonise/portfolio-box-red-roses-ferrero.webp": { width: 960, height: 982, has640: true },
+  "/assets/nonise/portfolio-hamper-orange-roses-tray.webp": { width: 900, height: 1200, has640: true },
+  "/assets/nonise/portfolio-hamper-pink-teddy.webp": { width: 900, height: 1202, has640: true },
+  "/assets/nonise/portfolio-protea-pincushion.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/portfolio-protea-rose-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/portfolio-rose-cream-heart.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/portfolio-rose-pink-gyp.webp": { width: 900, height: 1200, has640: true },
+  "/assets/nonise/portfolio-vase-pink-gerbera.webp": { width: 900, height: 1219, has640: true },
+  "/assets/nonise/portfolio-vase-red-roses.webp": { width: 864, height: 1296, has640: true },
+  "/assets/nonise/portfolio-white-lily-sympathy.webp": { width: 864, height: 1296, has640: true },
+  "/assets/nonise/30-white-roses-with-gyp.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/50-roses-with-gyp.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/mixed-bouquet.webp": { width: 1280, height: 960, has640: true },
+  "/assets/nonise/mixed-lillies.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/protea-mix.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/red-rose-vase.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/roses-with-ferrero.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/sunshine-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/spring-garden-hatbox.webp": { width: 960, height: 935, has640: true },
+  "/assets/nonise/crimson-and-ivory-rose-hatbox.webp": { width: 960, height: 982, has640: true },
+  "/assets/nonise/blush-and-burgundy-rose-box.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/peach-and-pink-celebration-hatbox.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/pink-lily-and-gerbera-hatbox.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/blush-rose-and-carnation-box.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/sunlit-yellow-and-cream-hatbox.webp": { width: 1600, height: 1521, has640: true },
+  "/assets/nonise/red-rose-and-champagne-celebration-box.webp": { width: 1066, height: 1599, has640: true },
+  "/assets/nonise/ferrero-heart-and-rose-celebration-box.webp": { width: 1600, height: 1444, has640: true },
+  "/assets/nonise/pastel-garden-hatbox.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/white-posy-tribute.webp": { width: 1568, height: 1600, has640: true },
+  "/assets/nonise/ivory-upright-tribute.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/white-lily-and-rose-upright-spray.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/white-and-green-coffin-spray.webp": { width: 1600, height: 888, has640: true },
+  "/assets/nonise/pink-and-purple-funeral-cross.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/white-rose-funeral-cross.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/sunflower-funeral-cross.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/colourful-coffin-spray.webp": { width: 720, height: 905, has640: true },
+  "/assets/nonise/white-funeral-package-with-upright-and-posies.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/pink-funeral-package-with-casket-spray.webp": { width: 903, height: 1600, has640: true },
+  "/assets/nonise/white-funeral-package-with-arch-and-pedestals.webp": { width: 1600, height: 888, has640: true },
+  "/assets/nonise/snack-and-treat-gift-box.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/hennessy-and-chocolate-gift-hamper.webp": { width: 1147, height: 1501, has640: true },
+  "/assets/nonise/rose-and-wine-celebration-hamper.webp": { width: 1519, height: 1600, has640: true },
+  "/assets/nonise/wine-and-snack-wooden-crate.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/pink-teddy-and-rose-luxury-hamper.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/chocolate-and-snack-wooden-tray.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/golden-ribbon-snack-tray.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/red-teddy-and-rose-hatbox-hamper.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/sunflower-bouquet-and-snack-hamper.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/pink-sweet-treat-hatbox.webp": { width: 904, height: 1600, has640: true },
+  "/assets/nonise/fruit-and-chocolate-gift-crate.webp": { width: 1600, height: 900, has640: true },
+  "/assets/nonise/rustic-gourmet-hamper.webp": { width: 1559, height: 1600, has640: true },
+  "/assets/nonise/flower-and-snack-celebration-hamper.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/congratulations-snack-hamper.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/wellness-and-pantry-gift-bowl.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/movie-night-snack-hamper.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/white-teddy-and-rose-luxury-hamper.webp": { width: 1198, height: 1600, has640: true },
+  "/assets/nonise/pink-celebration-mixed-bouquet.webp": { width: 1078, height: 1581, has640: true },
+  "/assets/nonise/gerbera-sunshine-bouquet.webp": { width: 823, height: 1218, has640: true },
+  "/assets/nonise/jewel-tone-mixed-bouquet.webp": { width: 900, height: 961, has640: true },
+  "/assets/nonise/pink-lily-and-alstroemeria-bouquet.webp": { width: 900, height: 895, has640: true },
+  "/assets/nonise/sunset-rose-and-ranunculus-bouquet.webp": { width: 900, height: 982, has640: true },
+  "/assets/nonise/rose-and-lily-romance-bouquet.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/colourburst-mixed-bouquet.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/red-rose-and-lily-kraft-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/lily-and-rose-garden-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/pink-lily-and-carnation-grand-bouquet.webp": { width: 903, height: 1600, has640: true },
+  "/assets/nonise/fuchsia-sunset-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/pink-tulip-and-lily-bouquet.webp": { width: 1440, height: 1568, has640: true },
+  "/assets/nonise/orange-bloom-mixed-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/protea-and-leucadendron-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/blush-protea-and-rose-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/protea-and-pincushion-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/king-protea-indigenous-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/ivory-rose-ring-with-red-heart.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/blush-pink-rose-and-gypsophila-bouquet.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/cream-rose-and-gypsophila-bouquet.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/ruby-red-rose-statement-bouquet.webp": { width: 1080, height: 1295, has640: true },
+  "/assets/nonise/classic-red-rose-bouquet.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/red-and-white-birthday-rose-bouquet.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/ruby-birthday-rose-bouquet.webp": { width: 1499, height: 1600, has640: true },
+  "/assets/nonise/red-rose-noir-bouquet.webp": { width: 720, height: 960, has640: true },
+  "/assets/nonise/burgundy-velvet-rose-bouquet.webp": { width: 720, height: 1280, has640: true },
+  "/assets/nonise/rose-and-chocolate-keepsake-bouquet.webp": { width: 903, height: 1600, has640: true },
+  "/assets/nonise/monogram-red-rose-grand-bouquet.webp": { width: 1184, height: 1328, has640: true },
+  "/assets/nonise/ivory-rose-and-gypsophila-bouquet.webp": { width: 1199, height: 1312, has640: true },
+  "/assets/nonise/garden-medley-vase-arrangement.webp": { width: 847, height: 1600, has640: true },
+  "/assets/nonise/rose-and-delphinium-vase.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/peach-rose-and-lily-vase.webp": { width: 1432, height: 1588, has640: true },
+  "/assets/nonise/lilac-and-pink-vase-arrangement.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/eucalyptus-and-rose-vase.webp": { width: 1181, height: 1600, has640: true },
+  "/assets/nonise/red-rose-vase-with-ribbon.webp": { width: 864, height: 1296, has640: true },
+  "/assets/nonise/golden-lily-and-sunflower-vase.webp": { width: 1334, height: 1485, has640: true },
+  "/assets/nonise/vibrant-gerbera-vase-arrangement.webp": { width: 898, height: 1218, has640: true },
+  "/assets/nonise/pastel-garden-vase-arrangement.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/bright-summer-vase-arrangement.webp": { width: 1199, height: 1312, has640: true },
+  "/assets/nonise/white-lily-vase-arrangement.webp": { width: 864, height: 1296, has640: true },
+  "/assets/nonise/luxury-mixed-vase-arrangement.webp": { width: 877, height: 1135, has640: true },
+  "/assets/nonise/sunset-garden-vase-arrangement.webp": { width: 963, height: 1177, has640: true },
+  "/assets/nonise/sunflower-and-yellow-rose-vase.webp": { width: 900, height: 1600, has640: true },
+  "/assets/nonise/sunflower-grand-vase.webp": { width: 903, height: 1600, has640: true },
+  "/assets/nonise/protea-and-foliage-vase-arrangement.webp": { width: 1079, height: 1475, has640: true },
+};
+
+export interface ResponsiveImageAttrs {
+  width?: number;
+  height?: number;
+  srcSet?: string;
+}
+
+/**
+ * Derive intrinsic dimensions and a 640w/1x srcSet for a known local image.
+ * Returns an empty object for remote or unlisted sources so callers can spread
+ * the result onto an <img> without special-casing.
+ */
+export function responsiveImage(src: string): ResponsiveImageAttrs {
+  const meta = IMAGE_META[src];
+  if (!meta) return {};
+
+  const attrs: ResponsiveImageAttrs = { width: meta.width, height: meta.height };
+  if (meta.has640) {
+    const small = src.replace(/\.webp$/i, '-640.webp');
+    attrs.srcSet = `${small} 640w, ${src} ${meta.width}w`;
+  }
+  return attrs;
+}

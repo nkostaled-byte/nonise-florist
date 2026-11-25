@@ -10,151 +10,77 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 3000);
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-const INSTAGRAM_PROFILE_URL = 'https://www.instagram.com/nonise.florist/';
-const INSTAGRAM_HANDLE = '@nonise.florist';
-const DEFAULT_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
-
-interface RawInstagramMedia {
-  id: string;
-  caption?: string;
-  media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM' | string;
-  media_url?: string;
-  thumbnail_url?: string;
-  permalink: string;
-  timestamp?: string;
-}
-
-interface InstagramMediaItem {
-  id: string;
-  imageUrl: string;
-  permalink: string;
-  mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
-  alt: string;
-  timestamp?: string;
-}
-
-interface InstagramCacheEntry {
-  fetchedAt: number;
-  posts: InstagramMediaItem[];
-}
-
-let instagramCache: InstagramCacheEntry | null = null;
-
-function sanitizeAlt(caption?: string): string {
-  if (!caption) return 'Floral arrangement shared on Nonise Florist Instagram';
-  const singleLine = caption.replace(/\s+/g, ' ').trim();
-  return singleLine.length > 140 ? `${singleLine.slice(0, 137)}...` : singleLine;
-}
-
-function mapMediaItems(rawItems: RawInstagramMedia[]): InstagramMediaItem[] {
-  const mapped: InstagramMediaItem[] = [];
-  for (const item of rawItems) {
-    const isVideo = item.media_type === 'VIDEO';
-    const imageUrl = isVideo ? item.thumbnail_url || item.media_url : item.media_url;
-    if (!imageUrl || !item.permalink) continue;
-
-    const normalizedType: InstagramMediaItem['mediaType'] =
-      item.media_type === 'VIDEO'
-        ? 'VIDEO'
-        : item.media_type === 'CAROUSEL_ALBUM'
-        ? 'CAROUSEL_ALBUM'
-        : 'IMAGE';
-
-    mapped.push({
-      id: item.id,
-      imageUrl,
-      permalink: item.permalink,
-      mediaType: normalizedType,
-      alt: sanitizeAlt(item.caption),
-      timestamp: item.timestamp,
-    });
-  }
-  return mapped.slice(0, 6);
-}
-
-async function fetchOfficialInstagramMedia(): Promise<
-  | { status: 'connected'; posts: InstagramMediaItem[]; cached: boolean }
-  | { status: 'unconfigured'; posts: [] }
-  | { status: 'error'; reason: 'token_expired' | 'unavailable'; posts: [] }
-> {
-  const accessToken = (process.env.INSTAGRAM_ACCESS_TOKEN || '').trim();
-  if (!accessToken) {
-    return { status: 'unconfigured', posts: [] };
-  }
-
-  const cacheTtlMs = Number(process.env.INSTAGRAM_CACHE_TTL_MS || DEFAULT_CACHE_TTL_MS);
-  if (instagramCache && Date.now() - instagramCache.fetchedAt < cacheTtlMs) {
-    return { status: 'connected', posts: instagramCache.posts, cached: true };
-  }
-
-  const userId = (process.env.INSTAGRAM_USER_ID || 'me').trim();
-  const apiHost =
-    (process.env.INSTAGRAM_API_HOST || '').trim().toLowerCase() === 'facebook'
-      ? 'https://graph.facebook.com'
-      : 'https://graph.instagram.com';
-
-  const endpoint = new URL(`${apiHost}/v21.0/${encodeURIComponent(userId)}/media`);
-  endpoint.searchParams.set(
-    'fields',
-    'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp'
-  );
-  endpoint.searchParams.set('limit', '12');
-  endpoint.searchParams.set('access_token', accessToken);
-
-  try {
-    const response = await fetch(endpoint.toString(), {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(8000),
-    });
-
-    const payload = (await response.json()) as {
-      data?: RawInstagramMedia[];
-      error?: { code?: number; message?: string; type?: string };
-    };
-
-    if (!response.ok || payload.error) {
-      const errorCode = payload.error?.code;
-      const isTokenExpired = errorCode === 190 || response.status === 401;
-
-      if (!isTokenExpired && instagramCache && instagramCache.posts.length > 0) {
-        return { status: 'connected', posts: instagramCache.posts, cached: true };
-      }
-
-      return {
-        status: 'error',
-        reason: isTokenExpired ? 'token_expired' : 'unavailable',
-        posts: [],
-      };
-    }
-
-    const posts = mapMediaItems(Array.isArray(payload.data) ? payload.data : []);
-    instagramCache = {
-      fetchedAt: Date.now(),
-      posts,
-    };
-
-    return { status: 'connected', posts, cached: false };
-  } catch {
-    if (instagramCache && instagramCache.posts.length > 0) {
-      return { status: 'connected', posts: instagramCache.posts, cached: true };
-    }
-    return { status: 'error', reason: 'unavailable', posts: [] };
-  }
-}
-
 async function startServer() {
   const app = express();
 
-  app.get('/api/instagram/media', async (_req, res) => {
-    res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-    const result = await fetchOfficialInstagramMedia();
-    res.json({
-      ...result,
-      profileUrl: INSTAGRAM_PROFILE_URL,
-      handle: INSTAGRAM_HANDLE,
+  if (IS_PRODUCTION) {
+    app.set('trust proxy', true);
+
+    // HSTS: force HTTPS for a year on every response (ignored over plain HTTP).
+    app.use((_req, res, next) => {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+      next();
     });
-  });
+
+    const canonicalHost = (process.env.CANONICAL_HOST || 'noniseflorist.com').toLowerCase();
+    const forceHttps = process.env.FORCE_HTTPS !== 'false';
+
+    // Normalise the host, protocol and trailing slash to the canonical URL so
+    // search engines only ever see one version of each page.
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+      const host = (req.hostname || '').toLowerCase();
+      if (!host) return next();
+
+      const isCanonical = host === canonicalHost;
+      const isWww = host === `www.${canonicalHost}`;
+      if (!isCanonical && !isWww) return next();
+
+      const proto = (req.protocol || 'http').toLowerCase();
+      const original = req.originalUrl || req.url || '/';
+      const queryIndex = original.indexOf('?');
+      const pathOnly = queryIndex >= 0 ? original.slice(0, queryIndex) : original;
+      const query = queryIndex >= 0 ? original.slice(queryIndex) : '';
+      const trimmedPath = pathOnly.length > 1 ? pathOnly.replace(/\/+$/, '') : pathOnly;
+      const targetPath = trimmedPath === pathOnly ? original : `${trimmedPath}${query}`;
+      const targetHost = isWww ? canonicalHost : host;
+
+      if (isWww || (forceHttps && proto !== 'https') || trimmedPath !== pathOnly) {
+        return res.redirect(301, `https://${targetHost}${targetPath}`);
+      }
+
+      return next();
+    });
+
+    // 301 legacy/alias paths to their canonical URLs so crawlers never index duplicates.
+    const ALIAS_REDIRECTS: Record<string, string> = {
+      '/home': '/',
+      '/about-us': '/about',
+      '/contact-us': '/contact',
+      '/cart': '/checkout',
+      '/my-account': '/shop',
+      // Collection categories renamed in 2026.
+      '/collections/roses': '/collections/rose-bouquets',
+      '/collections/everyday-bouquets': '/collections/mixed-bouquets',
+      '/collections/gifting': '/collections/hampers',
+    };
+
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+      const rawPath = (req.path || '/').replace(/\/+$/, '') || '/';
+      const pathname = rawPath.toLowerCase();
+      const target =
+        ALIAS_REDIRECTS[pathname] ?? (rawPath !== pathname ? pathname : undefined);
+      if (!target) return next();
+
+      const original = req.originalUrl || '';
+      const queryIndex = original.indexOf('?');
+      const query = queryIndex >= 0 ? original.slice(queryIndex) : '';
+      return res.redirect(301, `https://${canonicalHost}${target}${query}`);
+    });
+  }
 
   if (!IS_PRODUCTION) {
     const { createServer: createViteServer } = await import('vite');
@@ -165,13 +91,70 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distDir = path.resolve(__dirname, 'dist');
-    app.use(express.static(distDir));
-    app.get('*splat', (_req, res) => {
-      const indexFile = path.join(distDir, 'index.html');
-      if (fs.existsSync(indexFile)) {
-        res.sendFile(indexFile);
+    const indexFile = path.join(distDir, 'index.html');
+
+    if (!fs.existsSync(indexFile)) {
+      throw new Error('Build output not found. Run "npm run build" first.');
+    }
+
+    // Serve real files (assets, robots.txt, sitemap.xml) with appropriate caching.
+    app.use(
+      express.static(distDir, {
+        index: false,
+        redirect: false,
+        setHeaders: (res, filePath) => {
+          const normalized = filePath.replace(/\\/g, '/');
+          if (/\/assets\/(nonise|floral|aistudio)\//.test(normalized)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800');
+          } else if (/\/assets\//.test(normalized)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          } else {
+            res.setHeader('Cache-Control', 'no-cache');
+          }
+        },
+      })
+    );
+
+    // Serve the prerendered HTML for each known route (/, /shop, /product/:slug, ...).
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        return next();
+      }
+
+      let pathname: string;
+      try {
+        pathname = decodeURIComponent(req.path);
+      } catch {
+        return next();
+      }
+
+      const cleanPath = pathname.replace(/^\/+|\/+$/g, '');
+      const candidate = path.resolve(
+        distDir,
+        cleanPath ? path.join(cleanPath, 'index.html') : 'index.html'
+      );
+
+      if (!candidate.startsWith(`${distDir}${path.sep}`)) {
+        return next();
+      }
+
+      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+        res.setHeader('Cache-Control', 'no-cache');
+        return res.sendFile(candidate);
+      }
+
+      return next();
+    });
+
+    // Unknown paths are genuine 404s (no soft-404 home fallback).
+    app.use((_req, res) => {
+      res.status(404);
+      res.setHeader('Cache-Control', 'no-store');
+      const notFoundFile = path.join(distDir, '404.html');
+      if (fs.existsSync(notFoundFile)) {
+        res.sendFile(notFoundFile);
       } else {
-        res.status(404).send('Build output not found. Run npm run build first.');
+        res.type('text/plain').send('404 Not Found');
       }
     });
   }

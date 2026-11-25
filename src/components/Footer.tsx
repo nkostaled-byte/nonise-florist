@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, Instagram, Mail, MapPin, Phone, X } from 'lucide-react';
+import { Clock, Mail, MapPin, Phone, X } from 'lucide-react';
 import { BUSINESS_INFO } from '../data/noniseData';
+import { LANDING_LINKS, LANDING_PAGES } from '../data/landingPages';
 import { PageView } from '../types';
+import { RouteState, pathFor } from '../lib/routes';
 import { RevealSection } from './RevealSection';
+import { SocialIconLinks } from './SocialLinks';
 
 interface FooterProps {
   onNavigate: (view: PageView, sectionId?: string) => void;
+  onNavigateRoute?: (route: RouteState) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onNavigateRoute }) => {
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
 
   useEffect(() => {
@@ -31,6 +35,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <img
                   src={BUSINESS_INFO.logo}
                   alt="Nonise Florist Crest"
+                  width={320}
+                  height={320}
                   loading="lazy"
                   className="w-14 h-14 rounded-full object-cover border border-[#C5A059]/60 transition-transform duration-300 group-hover:scale-[1.04]"
                   referrerPolicy="no-referrer"
@@ -55,59 +61,102 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <h3 className="eyebrow text-[#C5A059]">Explore</h3>
               <ul className="space-y-2.5 text-[14px] text-[#E4DCE1]">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('home')}
+                  <a
+                    href="/"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate('home');
+                    }}
                     className="footer-link hover:text-white cursor-pointer"
                   >
                     Home
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('shop')}
+                  <a
+                    href="/shop"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate('shop');
+                    }}
                     className="footer-link hover:text-white cursor-pointer"
                   >
                     Shop Arrangements
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('home', 'occasions')}
+                  <a
+                    href="/#occasions"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate('home', 'occasions');
+                    }}
                     className="footer-link hover:text-white cursor-pointer"
                   >
                     Occasions &amp; Events
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('gallery')}
+                  <a
+                    href="/gallery"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate('gallery');
+                    }}
                     className="footer-link hover:text-white cursor-pointer"
                   >
                     Recent Work Gallery
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('about')}
+                  <a
+                    href="/about"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate('about');
+                    }}
                     className="footer-link hover:text-white cursor-pointer"
                   >
                     About Us
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('contact')}
+                  <a
+                    href="/contact"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate('contact');
+                    }}
                     className="footer-link hover:text-white cursor-pointer"
                   >
                     Contact &amp; Enquiries
-                  </button>
+                  </a>
                 </li>
+              </ul>
+
+              <h3 className="eyebrow text-[#C5A059] pt-2">Popular Services</h3>
+              <ul className="space-y-2.5 text-[14px] text-[#E4DCE1]">
+                {LANDING_LINKS.map((link) => {
+                  const href = LANDING_PAGES[link.slug].path;
+                  return (
+                    <li key={link.slug}>
+                      <a
+                        href={href}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (onNavigateRoute) {
+                            onNavigateRoute({ view: 'landing', landingSlug: link.slug });
+                          } else {
+                            window.location.href = href;
+                          }
+                        }}
+                        className="footer-link hover:text-white cursor-pointer"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  );
+                })}
               </ul>
             </RevealSection>
 
@@ -161,18 +210,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   <Mail className="w-4 h-4 text-[#C5A059]/70 shrink-0" aria-hidden="true" />
                   <span>{BUSINESS_INFO.emailSecondary}</span>
                 </a>
-                <a
-                  href={BUSINESS_INFO.instagramHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="footer-link group gap-2.5 text-[13px] text-[#E4DCE1] hover:text-white"
-                >
-                  <Instagram
-                    className="w-4 h-4 text-[#C5A059] shrink-0 transition-transform duration-200 group-hover:scale-110"
-                    aria-hidden="true"
-                  />
-                  <span>{BUSINESS_INFO.instagramHandle}</span>
-                </a>
+                <div className="pt-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#C5A059]">
+                    Follow Us
+                  </p>
+                  <SocialIconLinks className="mt-2.5" />
+                </div>
               </div>
 
               <div className="pt-2 flex flex-wrap gap-3">
@@ -213,20 +256,26 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               >
                 Refund &amp; Delivery Policy
               </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('shop')}
+              <a
+                href="/shop"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('shop');
+                }}
                 className="footer-link hover:text-white cursor-pointer"
               >
                 Shop Now
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('gallery')}
+              </a>
+              <a
+                href="/gallery"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate('gallery');
+                }}
                 className="footer-link hover:text-white cursor-pointer"
               >
                 Gallery
-              </button>
+              </a>
             </div>
           </RevealSection>
         </div>

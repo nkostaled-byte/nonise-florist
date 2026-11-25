@@ -1,8 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { responsiveImage } from '../lib/imageManifest';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface EditorialImageProps {
   src: string;
   alt: string;
+  /** Layout width hint for responsive srcSet selection, e.g. '(min-width: 1024px) 25vw, 50vw' */
+  sizes?: string;
   /** Container aspect ratio & framing classes (e.g. 'aspect-[4/5] rounded-sm') */
   wrapperClassName?: string;
   /** Classes applied directly to the inner <img> element */
@@ -28,6 +34,7 @@ interface EditorialImageProps {
 export const EditorialImage: React.FC<EditorialImageProps> = ({
   src,
   alt,
+  sizes,
   wrapperClassName = '',
   imgClassName = 'w-full h-full object-cover',
   delayMs = 0,
@@ -38,19 +45,19 @@ export const EditorialImage: React.FC<EditorialImageProps> = ({
   children,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    if (!('IntersectionObserver' in window)) return true;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
+  // Render visible on the server and on the first client pass so hydration
+  // matches, then hide below-the-fold frames before paint to animate them in.
+  const [visible, setVisible] = useState(true);
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === 'undefined' || immediate) return;
+    if (!('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setVisible(false);
+  }, [immediate]);
 
   useEffect(() => {
     if (visible) return;
-
-    if (immediate) {
-      const raf = window.requestAnimationFrame(() => setVisible(true));
-      return () => window.cancelAnimationFrame(raf);
-    }
 
     const node = containerRef.current;
     if (!node) return;
@@ -69,6 +76,8 @@ export const EditorialImage: React.FC<EditorialImageProps> = ({
     return () => observer.disconnect();
   }, [visible, immediate]);
 
+  const imageAttrs = responsiveImage(src);
+
   return (
     <div ref={containerRef} className={`img-reveal-shell relative ${wrapperClassName}`}>
       <div
@@ -77,6 +86,10 @@ export const EditorialImage: React.FC<EditorialImageProps> = ({
       >
         <img
           src={src}
+          srcSet={sizes ? imageAttrs.srcSet : undefined}
+          sizes={sizes}
+          width={imageAttrs.width}
+          height={imageAttrs.height}
           alt={alt}
           loading={loading}
           decoding="async"

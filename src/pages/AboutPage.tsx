@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight, Check, MapPin, Star } from 'lucide-react';
 import { BRAND_STORY, BUSINESS_INFO } from '../data/noniseData';
 import { PageView } from '../types';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { RevealSection } from '../components/RevealSection';
 import { EditorialImage } from '../components/EditorialImage';
 
@@ -18,6 +19,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, onStartInquiry
         <div className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 py-14 md:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             <RevealSection immediate className="lg:col-span-7 space-y-5">
+              <Breadcrumbs
+                items={[
+                  { label: 'Home', route: { view: 'home' } },
+                  { label: 'About Us' },
+                ]}
+                className="mb-1"
+              />
               <p className="eyebrow text-[#3E5B42]">About Nonise Florist</p>
               <h1 className="font-editorial text-[36px] sm:text-[46px] font-semibold leading-[1.15] text-[#2F1B2E]">
                 A Legacy of Love, Crafted Fresh in Pietermaritzburg
@@ -31,8 +39,9 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, onStartInquiry
 
             <div className="lg:col-span-5">
               <EditorialImage
-                src="/assets/nonise/about-feature.jpg"
+                src="/assets/nonise/about-feature.webp"
                 alt="Romantic pink rose and tulip floral hatbox crafted by Nonise Florist"
+                sizes="(min-width: 1024px) 42vw, 100vw"
                 immediate
                 loading="eager"
                 hoverZoom={false}
@@ -48,6 +57,16 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, onStartInquiry
       <section className="py-16 md:py-20 border-b border-[#EFE8DC]">
         <div className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
           <RevealSection className="lg:col-span-5 space-y-4">
+            <EditorialImage
+              src="/assets/nonise/nokwanda-mthembu.webp"
+              alt="Mrs. Nokwanda Mthembu, founder and lead florist at Nonise Florist"
+              sizes="(min-width: 1024px) 42vw, 100vw"
+              wrapperClassName="aspect-[4/3] rounded-sm border border-[#EFE8DC] bg-white shadow-[0_12px_32px_-4px_rgba(47,27,46,0.08)]"
+              hoverZoom={false}
+            />
+            <p className="text-[12px] text-[#8B7073]">
+              Mrs. Nokwanda Mthembu, founder &amp; lead florist.
+            </p>
             <p className="eyebrow text-[#AB274A]">Leadership &amp; Founder</p>
             <h2 className="font-editorial text-[30px] sm:text-[34px] font-medium text-[#2F1B2E] leading-tight">
               {BUSINESS_INFO.director}
@@ -143,8 +162,9 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate, onStartInquiry
 
           <div className="lg:col-span-6">
             <EditorialImage
-              src="/assets/nonise/gallery-10.jpg"
+              src="/assets/nonise/gallery-10.webp"
               alt="Wedding reception floral runner created by Nonise Florist"
+              sizes="(min-width: 1024px) 50vw, 100vw"
               hoverZoom={false}
               delayMs={90}
               wrapperClassName="aspect-[16/11] rounded-sm border border-[#EFE8DC] bg-white"

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Menu, ShoppingBag, X } from 'lucide-react';
 import { BUSINESS_INFO, formatZAR } from '../data/noniseData';
 import { PageView } from '../types';
+import { pathFor } from '../lib/routes';
 
 interface NavbarProps {
   currentView: PageView;
@@ -97,9 +98,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header className="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#EFE8DC]">
         <div className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 h-[72px] flex items-center justify-between gap-4 lg:gap-8">
           {/* Zone 1: Brand Crest + Single-Line Wordmark (logo only on mobile) */}
-          <button
-            type="button"
-            onClick={() => handleNavClick('home')}
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('home');
+            }}
             className="flex items-center gap-3 text-left group whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3E5B42] rounded-sm cursor-pointer"
             aria-label="Nonise Florist Home"
           >
@@ -112,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden sm:inline font-editorial text-[20px] md:text-[23px] font-semibold tracking-[-0.01em] text-[#2F1B2E] group-hover:text-[#D84A6A] transition-colors duration-200">
               Nonise Florist
             </span>
-          </button>
+          </a>
 
           {/* Zone 2: Primary Text Navigation */}
           <nav
@@ -125,11 +129,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 (currentView === item.view ||
                   (item.view === 'shop' && currentView === 'product'));
               return (
-                <button
+                <a
                   key={item.label}
-                  type="button"
+                  href={item.sectionId ? `/#${item.sectionId}` : pathFor({ view: item.view })}
                   data-active={isActive ? 'true' : 'false'}
-                  onClick={() => handleNavClick(item.view, item.sectionId)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(item.view, item.sectionId);
+                  }}
                   className={`nav-link-underline py-1 whitespace-nowrap shrink-0 transition-colors duration-200 cursor-pointer ${
                     isActive
                       ? 'text-[#2F1B2E] font-semibold'
@@ -137,20 +144,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }`}
                 >
                   {item.label}
-                </button>
+                </a>
               );
             })}
           </nav>
 
           {/* Zone 3: Shop Now CTA + Shopping Bag + Mobile Menu Trigger */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => handleNavClick('shop')}
+            <a
+              href="/shop"
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavClick('shop');
+              }}
               className="btn-editorial hidden sm:inline-flex items-center justify-center px-4 py-2.5 min-h-[40px] rounded-sm bg-[#D84A6A] text-white text-[13px] font-semibold tracking-[0.04em] hover:bg-[#C43D5C] hover:shadow-[0_6px_16px_-4px_rgba(216,74,106,0.4)] whitespace-nowrap shrink-0 cursor-pointer"
             >
               Shop Now
-            </button>
+            </a>
 
             <button
               type="button"
@@ -227,13 +237,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
 
               <div className="mt-5">
-                <button
-                  type="button"
-                  onClick={() => handleNavClick('shop')}
-                  className="btn-editorial w-full py-3 px-4 rounded-sm bg-[#D84A6A] text-white text-[14px] font-semibold tracking-[0.04em] hover:bg-[#C43D5C] cursor-pointer"
+                <a
+                  href="/shop"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick('shop');
+                  }}
+                  className="btn-editorial w-full py-3 px-4 rounded-sm bg-[#D84A6A] text-white text-[14px] font-semibold tracking-[0.04em] hover:bg-[#C43D5C] cursor-pointer text-center block"
                 >
                   Shop Now
-                </button>
+                </a>
               </div>
 
               <nav className="mt-4 flex flex-col divide-y divide-[#EFE8DC]/70">
@@ -243,10 +256,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     (currentView === item.view ||
                       (item.view === 'shop' && currentView === 'product'));
                   return (
-                    <button
+                    <a
                       key={item.label}
-                      type="button"
-                      onClick={() => handleNavClick(item.view, item.sectionId)}
+                      href={item.sectionId ? `/#${item.sectionId}` : pathFor({ view: item.view })}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavClick(item.view, item.sectionId);
+                      }}
                       className={`group py-3.5 text-left text-[16px] font-editorial font-medium transition-colors flex items-center justify-between cursor-pointer ${
                         isActive ? 'text-[#D84A6A]' : 'text-[#2F1B2E] hover:text-[#D84A6A]'
                       }`}
@@ -255,7 +271,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <span className="text-[#C5A059] text-sm transition-transform duration-200 group-hover:translate-x-1">
                         &rarr;
                       </span>
-                    </button>
+                    </a>
                   );
                 })}
               </nav>

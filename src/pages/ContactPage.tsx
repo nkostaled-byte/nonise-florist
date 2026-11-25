@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertCircle, Check, Clock, Mail, MapPin, Phone, Send } from 'lucide-react';
 import { BUSINESS_INFO } from '../data/noniseData';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { RevealSection } from '../components/RevealSection';
 import { EditorialImage } from '../components/EditorialImage';
 
@@ -73,6 +74,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ initialTopic }) => {
       {/* Page Header */}
       <section className="bg-[#F7EFE3]/75 border-b border-[#EFE8DC]">
         <RevealSection immediate className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 py-12 md:py-16">
+          <Breadcrumbs
+            items={[
+              { label: 'Home', route: { view: 'home' } },
+              { label: 'Contact' },
+            ]}
+            className="mb-5"
+          />
           <p className="eyebrow text-[#3E5B42]">Reach Our Boutique</p>
           <h1 className="font-editorial text-[34px] sm:text-[44px] font-semibold text-[#2F1B2E] leading-tight mt-2">
             Contact &amp; Bespoke Enquiries
@@ -156,8 +164,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ initialTopic }) => {
             </RevealSection>
 
             <EditorialImage
-              src="/assets/nonise/contact-floral.jpg"
+              src="/assets/nonise/contact-floral.webp"
               alt="Fresh pink and magenta rose hatbox arranged at Nonise Florist"
+              sizes="(min-width: 1024px) 42vw, 100vw"
               hoverZoom={false}
               delayMs={120}
               wrapperClassName="aspect-[16/10] rounded-sm border border-[#EFE8DC] bg-[#F5F3EF]"

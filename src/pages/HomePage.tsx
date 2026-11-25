@@ -6,14 +6,17 @@ import {
   OCCASIONS,
   SPECIALTY_CATEGORIES,
 } from '../data/noniseData';
+import { LANDING_LINKS, LANDING_PAGES } from '../data/landingPages';
 import { PageView, SpecialtyKey } from '../types';
+import { RouteState, pathFor } from '../lib/routes';
 import { LivingBloomHero } from '../components/LivingBloomHero';
-import { InstagramSection } from '../components/InstagramSection';
+import { SocialsSection } from '../components/SocialsSection';
 import { RevealSection } from '../components/RevealSection';
 import { EditorialImage } from '../components/EditorialImage';
 
 interface HomePageProps {
   onNavigate: (view: PageView, sectionId?: string) => void;
+  onNavigateRoute?: (route: RouteState) => void;
   onSelectCategory: (filter: SpecialtyKey) => void;
   onStartInquiry: (topic: string) => void;
 }
@@ -143,6 +146,7 @@ const CorporateFloralEmblem: React.FC = () => (
 
 export const HomePage: React.FC<HomePageProps> = ({
   onNavigate,
+  onNavigateRoute,
   onSelectCategory,
   onStartInquiry,
 }) => {
@@ -205,13 +209,18 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {SPECIALTY_CATEGORIES.map((category, idx) => (
               <RevealSection key={category.id} delayMs={idx * 75}>
-                <button
-                  type="button"
-                  onClick={() => {
+                <a
+                  href={
+                    category.actionType === 'contact'
+                      ? '/contact'
+                      : pathFor({ view: 'shop', specialty: category.filterKey ?? 'all' })
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
                     if (category.actionType === 'contact') {
                       onStartInquiry('Weddings & Events Floral Styling');
                     } else {
-                      onSelectCategory(category.filterKey);
+                      onSelectCategory(category.filterKey ?? 'all');
                     }
                   }}
                   className="group relative w-full text-left rounded-sm overflow-hidden border border-[#EFE8DC] bg-[#2F1B2E] aspect-[4/5] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-8px_rgba(47,27,46,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#48654C] cursor-pointer block"
@@ -219,6 +228,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <EditorialImage
                     src={category.image}
                     alt={category.title}
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                     wrapperClassName="w-full h-full"
                     imgClassName="w-full h-full object-cover opacity-95"
                     delayMs={idx * 75}
@@ -239,10 +249,35 @@ export const HomePage: React.FC<HomePageProps> = ({
                       </span>
                     </div>
                   </EditorialImage>
-                </button>
+                </a>
               </RevealSection>
             ))}
           </div>
+
+          <RevealSection delayMs={120} className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <span className="eyebrow text-[#48654C]">Popular services</span>
+            {LANDING_LINKS.map((link) => {
+              const href = LANDING_PAGES[link.slug].path;
+              return (
+                <a
+                  key={link.slug}
+                  href={href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onNavigateRoute) {
+                      onNavigateRoute({ view: 'landing', landingSlug: link.slug });
+                    } else {
+                      window.location.href = href;
+                    }
+                  }}
+                  className="link-gold text-[#2F1B2E] hover:text-[#AB274A] cursor-pointer"
+                >
+                  <span>{link.label}</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </a>
+              );
+            })}
+          </RevealSection>
         </div>
       </section>
 
@@ -351,6 +386,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <EditorialImage
                     src={item.image}
                     alt={item.title}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                     wrapperClassName="aspect-[16/10] w-full bg-[#F5F3EF]"
                     delayMs={(idx % 3) * 75}
                     hoverZoom
@@ -388,10 +424,60 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 5. INSTAGRAM SHOWCASE (Official Graph API / Graceful Fallback) */}
-      <InstagramSection />
+      {/* 5. CUSTOM BOUQUETS & HAMPERS */}
+      <section className="py-16 md:py-20 lg:py-24 bg-[#FBF9F5] border-b border-[#EFE8DC]">
+        <div className="max-w-[1200px] mx-auto px-5 md:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <RevealSection className="lg:col-span-6">
+            <EditorialImage
+              src="/assets/nonise/gallery-4.webp"
+              alt="Hand-tied custom pink celebration bouquet by Nonise Florist"
+              sizes="(min-width: 1024px) 48vw, 100vw"
+              wrapperClassName="aspect-[4/5] rounded-sm border border-[#EFE8DC] bg-white shadow-[0_12px_32px_-4px_rgba(47,27,46,0.08)]"
+            />
+          </RevealSection>
 
-      {/* 6. REFINED STUDIO CONTACT & CONCIERGE INVITATION */}
+          <RevealSection delayMs={80} className="lg:col-span-6 space-y-5">
+            <p className="eyebrow text-[#48654C]">Custom Bouquets &amp; Hampers</p>
+            <h2 className="font-editorial text-[30px] sm:text-[38px] lg:text-[42px] font-medium leading-tight tracking-[-0.01em] text-[#2F1B2E]">
+              Your Flowers, Your Way
+            </h2>
+            <p className="text-[15px] sm:text-[16px] leading-[1.75] text-[#584144] max-w-xl">
+              Choose the stems, colours, size and budget. Our florists hand-tie every custom bouquet
+              in the Pietermaritzburg studio, and can pair it with chocolates, champagne or a curated
+              gift hamper.
+            </p>
+            <div className="flex flex-wrap items-center gap-4 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onNavigateRoute) {
+                    onNavigateRoute({ view: 'landing', landingSlug: 'custom-bouquets' });
+                  } else {
+                    window.location.href = '/custom-bouquets';
+                  }
+                }}
+                className="btn-editorial inline-flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-sm bg-[#AB274A] text-white text-[13px] font-semibold tracking-[0.04em] hover:bg-[#931E3E] cursor-pointer"
+              >
+                <span>Explore Custom Bouquets</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectCategory('hampers')}
+                className="link-gold text-[#2F1B2E] hover:text-[#AB274A] cursor-pointer"
+              >
+                <span>Shop Hampers</span>
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          </RevealSection>
+        </div>
+      </section>
+
+      {/* 6. SOCIALS SHOWCASE */}
+      <SocialsSection />
+
+      {/* 7. REFINED STUDIO CONTACT & CONCIERGE INVITATION */}
       <section className="py-16 md:py-20 bg-[#FBF9F5] border-t border-[#EFE8DC]">
         <div className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12">
           <div className="bg-white border border-[#EFE8DC] rounded-sm p-8 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">

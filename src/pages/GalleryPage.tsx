@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { GALLERY_PHOTOS } from '../data/noniseData';
 import { GalleryPhoto } from '../types';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { RevealSection } from '../components/RevealSection';
 import { EditorialImage } from '../components/EditorialImage';
 
@@ -11,8 +13,13 @@ interface GalleryPageProps {
 
 const COLLECTIONS: Array<'All' | GalleryPhoto['collection']> = [
   'All',
-  'Roses & Bouquets',
-  'Hatboxes & Hampers',
+  'Rose Bouquets',
+  'Mixed Bouquets',
+  'Protea Bouquets',
+  'Vase Arrangements',
+  'Box Arrangements',
+  'Gift Hampers',
+  'Funeral & Sympathy',
   'Weddings & Events',
 ];
 
@@ -73,18 +80,35 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ onStartInquiry }) => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [lightboxIndex, visiblePhotos.length]);
 
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [lightboxIndex]);
+
   return (
     <div className="bg-[#FDFBF7] min-h-[75vh]">
       {/* Header */}
       <section className="bg-[#F7EFE3]/70 border-b border-[#EFE8DC]">
         <RevealSection immediate className="max-w-[1320px] mx-auto px-5 md:px-8 lg:px-12 py-12 md:py-16">
+          <Breadcrumbs
+            items={[
+              { label: 'Home', route: { view: 'home' } },
+              { label: 'Gallery' },
+            ]}
+            className="mb-5"
+          />
           <p className="eyebrow text-[#3E5B42]">Our Recent Work</p>
           <h1 className="font-editorial text-[34px] sm:text-[44px] font-semibold text-[#2F1B2E] leading-tight mt-2">
             Floral Portfolio &amp; Gallery
           </h1>
           <p className="text-[15px] sm:text-[16px] text-[#584144] mt-3 max-w-2xl leading-relaxed">
-            Authentic creations from our Pietermaritzburg studio — bespoke monogram bouquets,
-            keepsake hatboxes, chocolate hampers, baby showers, and romantic wedding tablescapes.
+            Authentic creations from our Pietermaritzburg studio — signature rose and protea
+            bouquets, vase arrangements, flower boxes, gift hampers, sympathy tributes, and
+            romantic wedding tablescapes.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-2" role="tablist" aria-label="Filter gallery">
@@ -123,7 +147,8 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ onStartInquiry }) => {
               >
                 <EditorialImage
                   src={photo.src}
-                  alt={photo.title}
+                  alt={photo.alt || photo.title}
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   wrapperClassName="aspect-[4/5] w-full bg-[#F5F3EF]"
                   delayMs={(idx % 3) * 75}
                   hoverZoom
@@ -140,8 +165,11 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ onStartInquiry }) => {
         </div>
       </section>
 
-      {/* Lightbox Modal */}
-      {lightboxPhoto && lightboxIndex !== null && (
+      {/* Lightbox Modal — portalled to <body> so the page transition transform
+          cannot turn position: fixed into an absolute box. */}
+      {lightboxPhoto &&
+        lightboxIndex !== null &&
+        createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
           role="dialog"
@@ -157,7 +185,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ onStartInquiry }) => {
               <img
                 key={lightboxPhoto.id}
                 src={lightboxPhoto.src}
-                alt={lightboxPhoto.title}
+                alt={lightboxPhoto.alt || lightboxPhoto.title}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain max-h-[55vh] md:max-h-[82vh] pdp-image-swap"
               />
@@ -228,7 +256,8 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ onStartInquiry }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

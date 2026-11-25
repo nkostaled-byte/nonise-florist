@@ -5,13 +5,19 @@ export type PageView =
   | 'gallery'
   | 'about'
   | 'contact'
-  | 'checkout';
+  | 'checkout'
+  | 'landing';
 
 export type SpecialtyKey =
   | 'all'
-  | 'roses'
-  | 'seasonal'
-  | 'gifting'
+  | 'box-arrangements'
+  | 'funeral-flowers'
+  | 'funeral-package-sets'
+  | 'hampers'
+  | 'mixed-bouquets'
+  | 'protea-bouquets'
+  | 'rose-bouquets'
+  | 'vase-arrangements'
   | 'events';
 
 export interface Product {
@@ -25,6 +31,7 @@ export interface Product {
   shortDescription: string;
   description: string;
   images: string[];
+  altText?: string;
   includes: string[];
   presentation: string;
   inStock: boolean;
@@ -61,11 +68,22 @@ export interface OccasionItem {
   inquiryTopic?: string;
 }
 
+export type GalleryCollection =
+  | 'Rose Bouquets'
+  | 'Mixed Bouquets'
+  | 'Protea Bouquets'
+  | 'Vase Arrangements'
+  | 'Box Arrangements'
+  | 'Gift Hampers'
+  | 'Funeral & Sympathy'
+  | 'Weddings & Events';
+
 export interface GalleryPhoto {
   id: string;
   src: string;
   title: string;
-  collection: 'Roses & Bouquets' | 'Hatboxes & Hampers' | 'Weddings & Events';
+  alt?: string;
+  collection: GalleryCollection;
   aspectClass?: string;
 }
 
@@ -85,5 +103,15 @@ export interface ConfirmedOrder {
   cardMessage?: string;
   specialInstructions?: string;
   items: CartItem[];
+  addons?: CheckoutAddon[];
   subtotalZAR: number;
+  totalZAR: number;
+}
+
+export interface CheckoutAddon {
+  id: string;
+  label: string;
+  priceZAR: number;
+  /** Studio price list quotes this add-on as "from" this amount. */
+  fromPrice?: boolean;
 }

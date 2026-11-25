@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ShoppingBag } from 'lucide-react';
 import { PRODUCTS } from './data/noniseData';
+import { LANDING_PAGES } from './data/landingPages';
 import { CartItem, ConfirmedOrder, PageView, Product, SpecialtyKey } from './types';
+import {
+  type RouteState,
+  pathFor,
+  productBySlug,
+  readRouteFromLocation,
+} from './lib/routes';
+import { applySeoToDocument, seoFor } from './lib/seo';
 import { Navbar } from './components/Navbar';
 import { CartDrawer } from './components/CartDrawer';
 import { Footer } from './components/Footer';
@@ -12,69 +20,93 @@ import { GalleryPage } from './pages/GalleryPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { CheckoutPage } from './pages/CheckoutPage';
+import { LandingPage } from './pages/LandingPage';
 
 const CART_STORAGE_KEY = 'nonise_florist_bag_v1';
 
-interface RouteHistoryState {
-  view: PageView;
-  shopFilter?: SpecialtyKey;
-  productId?: number;
-  inquiryTopic?: string;
+interface AppProps {
+  /** Fixed route used by the prerenderer; the browser falls back to window.location. */
+  initialRoute?: RouteState;
 }
 
-export default function App() {
-  const [currentView, setCurrentView] = useState<PageView>('home');
-  const [shopFilter, setShopFilter] = useState<SpecialtyKey>('all');
-  const [selectedProduct, setSelectedProduct] = useState<Product>(PRODUCTS[0]);
-  const [inquiryTopic, setInquiryTopic] = useState<string | undefined>(undefined);
+export default function App({ initialRoute: providedRoute }: AppProps = {}) {
+  const [initialRoute] = useState<RouteState>(
+    () => providedRoute ?? readRouteFromLocation()
+  );
+
+  const [currentView, setCurrentView] = useState<PageView>(initialRoute.view);
+  const [shopFilter, setShopFilter] = useState<SpecialtyKey>(initialRoute.specialty ?? 'all');
+  const [selectedProduct, setSelectedProduct] = useState<Product>(
+    () => productBySlug(initialRoute.productSlug) ?? PRODUCTS[0]
+  );
+  const [inquiryTopic, setInquiryTopic] = useState<string | undefined>(initialRoute.inquiryTopic);
+  const [landingSlug, setLandingSlug] = useState<string | undefined>(initialRoute.landingSlug);
   const [cartOpen, setCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    try {
-      const saved = window.localStorage.getItem(CART_STORAGE_KEY);
-      if (!saved) return [];
-      const parsed = JSON.parse(saved) as CartItem[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  // Start empty so the first client render matches the prerendered HTML, then
+  // restore the saved bag after hydration.
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartHydrated, setCartHydrated] = useState(false);
 
   useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as CartItem[];
+        if (Array.isArray(parsed)) setCartItems(parsed);
+      }
+    } catch {
+      // Ignore storage errors in private contexts
+    }
+    setCartHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!cartHydrated) return;
     try {
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
     } catch {
       // Ignore storage errors in private contexts
     }
-  }, [cartItems]);
+  }, [cartItems, cartHydrated]);
 
-  // Seed initial history entry & support browser Back / Forward cleanly
+  const currentRoute = useMemo<RouteState>(
+    () => ({
+      view: currentView,
+      productSlug: currentView === 'product' ? selectedProduct.slug : undefined,
+      specialty: currentView === 'shop' ? shopFilter : undefined,
+      inquiryTopic: currentView === 'contact' ? inquiryTopic : undefined,
+      landingSlug: currentView === 'landing' ? landingSlug : undefined,
+    }),
+    [currentView, selectedProduct.slug, shopFilter, inquiryTopic, landingSlug]
+  );
+
+  // Keep the document head (title, description, canonical, OG, JSON-LD) in sync with the route.
   useEffect(() => {
+    applySeoToDocument(seoFor(currentRoute));
+  }, [currentRoute]);
+
+  // Seed the canonical URL & support browser Back / Forward against real URLs
+  useEffect(() => {
+    const initial = readRouteFromLocation();
     try {
-      if (!window.history.state?.view) {
-        window.history.replaceState({ view: 'home' } satisfies RouteHistoryState, '');
-      }
+      window.history.replaceState(initial, '', pathFor(initial));
     } catch {
       // Ignore restricted iframe history API errors
     }
 
-    const handlePopState = (event: PopStateEvent) => {
-      const state = event.state as RouteHistoryState | null;
-      if (!state?.view) {
-        setCurrentView('home');
-        return;
-      }
-      setCurrentView(state.view);
-      if (state.shopFilter) setShopFilter(state.shopFilter);
-      if (state.productId !== undefined) {
-        const match = PRODUCTS.find((p) => p.id === state.productId);
+    const handlePopState = () => {
+      const next = readRouteFromLocation();
+      setCurrentView(next.view);
+      setShopFilter(next.specialty ?? 'all');
+      if (next.productSlug) {
+        const match = productBySlug(next.productSlug);
         if (match) setSelectedProduct(match);
       }
-      if (state.inquiryTopic !== undefined) {
-        setInquiryTopic(state.inquiryTopic);
-      }
+      setInquiryTopic(next.inquiryTopic);
+      setLandingSlug(next.landingSlug);
       window.scrollTo({ top: 0, behavior: 'auto' });
     };
 
@@ -103,9 +135,9 @@ export default function App() {
     }, 2600);
   }, []);
 
-  const pushHistory = (nextState: RouteHistoryState) => {
+  const pushRoute = (route: RouteState, url?: string) => {
     try {
-      window.history.pushState(nextState, '');
+      window.history.pushState(route, '', url ?? pathFor(route));
     } catch {
       // Ignore restricted iframe history API errors
     }
@@ -113,12 +145,15 @@ export default function App() {
 
   const navigateTo = (view: PageView, sectionId?: string) => {
     setCurrentView(view);
-    pushHistory({
-      view,
-      shopFilter,
-      productId: selectedProduct.id,
-      inquiryTopic,
-    });
+    const route: RouteState =
+      view === 'shop'
+        ? { view, specialty: shopFilter }
+        : view === 'product'
+        ? { view, productSlug: selectedProduct.slug }
+        : view === 'contact'
+        ? { view, inquiryTopic }
+        : { view };
+    pushRoute(route, `${pathFor(route)}${sectionId ? `#${sectionId}` : ''}`);
 
     if (sectionId) {
       window.setTimeout(() => {
@@ -132,24 +167,37 @@ export default function App() {
     }
   };
 
+  const handleNavigateRoute = (route: RouteState) => {
+    setCurrentView(route.view);
+    if (route.view === 'shop') setShopFilter(route.specialty ?? 'all');
+    if (route.view === 'landing') setLandingSlug(route.landingSlug);
+    if (route.view === 'contact') setInquiryTopic(route.inquiryTopic);
+    if (route.view === 'product' && route.productSlug) {
+      const match = productBySlug(route.productSlug);
+      if (match) setSelectedProduct(match);
+    }
+    pushRoute(route);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSelectCategory = (filter: SpecialtyKey) => {
     setShopFilter(filter);
     setCurrentView('shop');
-    pushHistory({ view: 'shop', shopFilter: filter });
+    pushRoute({ view: 'shop', specialty: filter });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
     setCurrentView('product');
-    pushHistory({ view: 'product', productId: product.id });
+    pushRoute({ view: 'product', productSlug: product.slug });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStartInquiry = (topic: string) => {
     setInquiryTopic(topic);
     setCurrentView('contact');
-    pushHistory({ view: 'contact', inquiryTopic: topic });
+    pushRoute({ view: 'contact', inquiryTopic: topic });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -204,7 +252,11 @@ export default function App() {
 
   // Keyed solely by route + active product so cart updates never re-trigger page transitions
   const pageTransitionKey =
-    currentView === 'product' ? `product-${selectedProduct.id}` : currentView;
+    currentView === 'product'
+      ? `product-${selectedProduct.id}`
+      : currentView === 'landing'
+      ? `landing-${landingSlug ?? ''}`
+      : currentView;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7] text-[#1B1C1A]">
@@ -221,6 +273,7 @@ export default function App() {
           {currentView === 'home' && (
             <HomePage
               onNavigate={navigateTo}
+              onNavigateRoute={handleNavigateRoute}
               onSelectCategory={handleSelectCategory}
               onStartInquiry={handleStartInquiry}
             />
@@ -230,6 +283,8 @@ export default function App() {
             <ShopPage
               key={shopFilter}
               initialFilter={shopFilter}
+              onNavigateRoute={handleNavigateRoute}
+              onSelectCategory={handleSelectCategory}
               onSelectProduct={handleSelectProduct}
               onQuickAdd={(product) => handleAddToCart(product, 1)}
               onStartInquiry={handleStartInquiry}
@@ -241,6 +296,7 @@ export default function App() {
               key={selectedProduct.id}
               product={selectedProduct}
               onBackToShop={() => navigateTo('shop')}
+              onNavigateRoute={handleNavigateRoute}
               onSelectProduct={handleSelectProduct}
               onAddToCart={handleAddToCart}
             />
@@ -250,6 +306,16 @@ export default function App() {
 
           {currentView === 'about' && (
             <AboutPage onNavigate={navigateTo} onStartInquiry={handleStartInquiry} />
+          )}
+
+          {currentView === 'landing' && landingSlug && LANDING_PAGES[landingSlug] && (
+            <LandingPage
+              config={LANDING_PAGES[landingSlug]}
+              onNavigateRoute={handleNavigateRoute}
+              onSelectProduct={handleSelectProduct}
+              onQuickAdd={(product) => handleAddToCart(product, 1)}
+              onStartInquiry={handleStartInquiry}
+            />
           )}
 
           {currentView === 'contact' && (
@@ -267,7 +333,7 @@ export default function App() {
         </div>
       </main>
 
-      <Footer onNavigate={navigateTo} />
+      <Footer onNavigate={navigateTo} onNavigateRoute={handleNavigateRoute} />
 
       <CartDrawer
         open={cartOpen}

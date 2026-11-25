@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { formatZAR } from '../data/noniseData';
+import { pathFor } from '../lib/routes';
 import { Product } from '../types';
 import { RevealSection } from './RevealSection';
 import { EditorialImage } from './EditorialImage';
@@ -28,35 +29,50 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     window.setTimeout(() => setJustAdded(false), 1400);
   };
 
+  const productPath = pathFor({ view: 'product', productSlug: product.slug });
+  const handleSelect = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onSelectProduct(product);
+  };
+
   return (
     <RevealSection delayMs={revealDelayMs} className="h-full">
-      <article
-        className="card-floral group rounded-sm overflow-hidden flex flex-col h-full cursor-pointer"
-        onClick={() => onSelectProduct(product)}
-      >
+      <article className="card-floral group rounded-sm overflow-hidden flex flex-col h-full">
         {/* 4:5 Portrait Floral Photography Frame */}
-        {!imgError ? (
-          <EditorialImage
-            src={product.images[0]}
-            alt={product.name}
-            wrapperClassName="aspect-[4/5] w-full bg-[#F5F3EF]"
-            delayMs={revealDelayMs}
-            hoverZoom
-            onError={() => setImgError(true)}
-          >
-            {/* Subtle Quick-View Hover Veil (desktop) */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#2F1B2E]/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </EditorialImage>
-        ) : (
-          <div className="relative aspect-[4/5] w-full bg-[#F7EFE3] overflow-hidden flex flex-col items-center justify-center p-6 text-center text-[#2F1B2E]">
-            <span className="font-editorial text-lg">{product.name}</span>
-            <span className="text-xs text-[#584144] mt-1">Nonise Florist Studio</span>
-          </div>
-        )}
+        <a
+          href={productPath}
+          onClick={handleSelect}
+          aria-label={`View ${product.name}`}
+          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#48654C]"
+        >
+          {!imgError ? (
+            <EditorialImage
+              src={product.images[0]}
+              alt={product.altText || product.name}
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              wrapperClassName="aspect-[4/5] w-full bg-[#F5F3EF]"
+              delayMs={revealDelayMs}
+              hoverZoom
+              onError={() => setImgError(true)}
+            >
+              {/* Subtle Quick-View Hover Veil (desktop) */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#2F1B2E]/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </EditorialImage>
+          ) : (
+            <div className="relative aspect-[4/5] w-full bg-[#F7EFE3] overflow-hidden flex flex-col items-center justify-center p-6 text-center text-[#2F1B2E]">
+              <span className="font-editorial text-lg">{product.name}</span>
+              <span className="text-xs text-[#584144] mt-1">Nonise Florist Studio</span>
+            </div>
+          )}
+        </a>
 
         {/* Content Hierarchy — Uniform Baselines, Zero-Pill Discipline */}
         <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-4">
-          <div className="space-y-1.5">
+          <a
+            href={productPath}
+            onClick={handleSelect}
+            className="block space-y-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#48654C]"
+          >
             <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] uppercase text-[#584144]">
               <span className="truncate">{product.wooCategory}</span>
               {product.badgeText && (
@@ -78,7 +94,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <p className="text-[13px] leading-relaxed text-[#584144] line-clamp-2">
               {product.shortDescription}
             </p>
-          </div>
+          </a>
 
           <div className="pt-3 border-t border-[#EFE8DC] flex items-center justify-between gap-3">
             <span className="text-[16px] font-semibold text-[#1B1C1A] tabular-price whitespace-nowrap">

@@ -1,4 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface RevealSectionProps {
   children: React.ReactNode;
@@ -26,19 +29,19 @@ export const RevealSection: React.FC<RevealSectionProps> = ({
   immediate = false,
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    if (!('IntersectionObserver' in window)) return true;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
+  // Keep the first render identical to the prerendered HTML, then hide
+  // below-the-fold sections before paint so they can reveal on scroll.
+  const [visible, setVisible] = useState(true);
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === 'undefined' || immediate) return;
+    if (!('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setVisible(false);
+  }, [immediate]);
 
   useEffect(() => {
     if (visible) return;
-
-    if (immediate) {
-      const raf = window.requestAnimationFrame(() => setVisible(true));
-      return () => window.cancelAnimationFrame(raf);
-    }
 
     const node = ref.current;
     if (!node) return;
