@@ -12,6 +12,9 @@ export interface PayfastConfig {
   merchantKey: string;
   passphrase: string;
   host: string;
+  emailApiUrl: string;
+  emailSecret: string;
+  emailClientId: string;
 }
 
 export interface PayfastResult {
@@ -25,6 +28,11 @@ export function payfastConfig(env: Record<string, unknown> = {}): PayfastConfig 
     merchantKey: String(env.PAYFAST_MERCHANT_KEY || 'yx6v2da4vda4vdd37'),
     passphrase: String(env.PAYFAST_PASSPHRASE || ''),
     host: env.PAYFAST_SANDBOX === 'true' ? 'sandbox.payfast.co.za' : 'www.payfast.co.za',
+    emailApiUrl: String(
+      env.EMAIL_API_URL || 'https://mygrafix-dashboard-worker.mygrafix.workers.dev'
+    ),
+    emailSecret: String(env.ORDER_NOTIFY_SECRET || ''),
+    emailClientId: String(env.EMAIL_CLIENT_ID || 'nonise-florist'),
   };
 }
 
@@ -143,6 +151,71 @@ export function buildCheckout(
   };
 }
 
+// Send the paid order to the shared My Grafix notification API, which emails
+// the customer and the client owner. Failures are logged, never fatal to ITN.
+function labelled(value: unknown, label: string) {
+  const text = String(value ?? '').trim();
+  const prefix = `${label}:`;
+  return text.startsWith(prefix) ? text.slice(prefix.length).trim() : text;
+}
+
+function orderItems(description: unknown) {
+  const parts = String(description ?? '').split(' + ');
+  const products = (parts.shift() || '').split('; ');
+  return [...products, ...parts].map((item) => item.trim()).filter(Boolean);
+}
+
+async function sendOrderEmail(fields: Record<string, string>, config: PayfastConfig) {
+  if (!config.emailSecret) {
+    console.warn('[payfast] ORDER_NOTIFY_SECRET is not set — order emails skipped');
+    return;
+  }
+
+  const customerName = `${fields.name_first ?? ''} ${
+    fields.name_last && fields.name_last !== '-' ? fields.name_last : ''
+  }`
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const order = {
+    reference: fields.m_payment_id,
+    total: Number(fields.amount_gross) || 0,
+    currency: 'ZAR',
+    paidAt: new Date().toISOString(),
+    items: orderItems(fields.item_description),
+    fulfillment: labelled(fields.custom_str1, 'Fulfilment'),
+    schedule: labelled(fields.custom_str2, 'Date'),
+    recipient: labelled(fields.custom_str3, 'Recipient'),
+    cardMessage: fields.custom_str4,
+    notes: fields.custom_str5,
+    customer: {
+      name: customerName,
+      email: fields.email_address,
+      phone: fields.cell_number,
+    },
+  };
+
+  const base = config.emailApiUrl.replace(/\/+$/, '');
+  const response = await fetch(`${base}/api/order-notifications`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-order-notify-secret': config.emailSecret,
+    },
+    body: JSON.stringify({ clientId: config.emailClientId, order }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    console.warn(
+      `[payfast] order email API returned ${response.status}: ${detail.slice(0, 200)}`
+    );
+  } else {
+    console.log(`[payfast] order emails requested for ${order.reference}`);
+  }
+}
+
 // PayFast ITN webhook: verify the signature, confirm the payload with PayFast,
 // then record the result. No order store exists yet, so paid orders are written
 // to the process log for manual reconciliation.
@@ -194,6 +267,13 @@ export async function handleNotify(
         notes: fields.custom_str5,
       })
     );
+
+    if (fields.payment_status === 'COMPLETE' && !config.host.startsWith('sandbox.')) {
+      await sendOrderEmail(fields, config).catch((error) => {
+        console.error('[payfast] order email failed:', error);
+      });
+    }
+
     return { status: 200, body: 'OK' };
   } catch (error) {
     console.error('[payfast] ITN error:', error);

@@ -57,6 +57,8 @@ Pietermaritzburg's heartfelt floral boutique led by Mrs. Nokwanda Mthembu — fr
 
 Checkout redirects to PayFast with a signed payment request (`POST /api/payfast/checkout`). PayFast reports the result to `POST /api/payfast/notify`, which verifies the signature, re-validates the payload with PayFast, and writes the paid order to the server log. There is no order database yet, so reconcile paid orders from the log (or ask the customer to send the order summary via WhatsApp/email, as the confirmation page prompts).
 
+Paid orders also send a confirmation to the customer and a new-order alert to Nonise through the shared My Grafix notification worker; see `api-worker/README.md`.
+
 ### Cloudflare deployment
 
 The live storefront is served as static assets on Cloudflare, so the Express

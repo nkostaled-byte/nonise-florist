@@ -6,6 +6,9 @@ interface Env {
   PAYFAST_MERCHANT_KEY?: string;
   PAYFAST_PASSPHRASE?: string;
   PAYFAST_SANDBOX?: string;
+  EMAIL_API_URL?: string;
+  EMAIL_CLIENT_ID?: string;
+  ORDER_NOTIFY_SECRET?: string;
 }
 
 function methodNotAllowed() {

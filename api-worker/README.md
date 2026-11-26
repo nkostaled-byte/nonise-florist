@@ -34,3 +34,20 @@ Optional variables (set in the Cloudflare dashboard or with `wrangler secret`):
 
 After deploying, `POST https://noniseflorist.com/api/payfast/checkout` should
 return JSON instead of the static host's `405 Method Not Allowed`.
+
+## Order emails
+
+When PayFast confirms a payment (`payment_status=COMPLETE`), the worker posts
+the order to the shared My Grafix notification API, which emails the customer
+and Nonise. Set the shared secret on this worker:
+
+```bash
+npx wrangler secret put ORDER_NOTIFY_SECRET
+```
+
+Use the same value on the `mygrafix-dashboard-worker` deployment, and make sure
+the Nonise client row exists there (see `add_nonise_client.sql`). `EMAIL_API_URL`
+and `EMAIL_CLIENT_ID` are configured in `wrangler.toml`.
+
+Sandbox payments intentionally skip emails so test orders never reach real
+customers.

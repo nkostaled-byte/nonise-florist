@@ -12,5 +12,6 @@ routes = [
 
 [vars]
 # APP_URL is optional: return/ITN links default to the request origin.
-# PAYFAST_PASSPHRASE must be set with `wrangler secret put` if the account
-# has a security passphrase.
+EMAIL_API_URL = "https://mygrafix-dashboard-worker.mygrafix.workers.dev"
+EMAIL_CLIENT_ID = "nonise-florist"
+# PAYFAST_PASSPHRASE and ORDER_NOTIFY_SECRET must be set with `wrangler secret put`.
