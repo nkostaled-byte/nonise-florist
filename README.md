@@ -56,3 +56,24 @@ Pietermaritzburg's heartfelt floral boutique led by Mrs. Nokwanda Mthembu — fr
 ## Payments
 
 Checkout redirects to PayFast with a signed payment request (`POST /api/payfast/checkout`). PayFast reports the result to `POST /api/payfast/notify`, which verifies the signature, re-validates the payload with PayFast, and writes the paid order to the server log. There is no order database yet, so reconcile paid orders from the log (or ask the customer to send the order summary via WhatsApp/email, as the confirmation page prompts).
+
+### Cloudflare deployment
+
+The live storefront is served as static assets on Cloudflare, so the Express
+server is not running there and `POST /api/payfast/*` returns `405`. Deploy
+the small API Worker in `api-worker/` once; its routes intercept
+`noniseflorist.com/api/*` while the static site keeps serving everything else.
+
+```bash
+npx wrangler login
+cd api-worker
+npx wrangler deploy
+```
+
+If the PayFast account has a security passphrase, add it as a Worker secret:
+
+```bash
+npx wrangler secret put PAYFAST_PASSPHRASE
+```
+
+See `api-worker/README.md` for optional variables and troubleshooting.

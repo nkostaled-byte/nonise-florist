@@ -1,46 +1,16 @@
 import 'dotenv/config';
-import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import {
-  CHECKOUT_ADDONS,
-  deliveryFeeZAR,
-  ROSE_COLOR_OPTIONS,
-  ROSE_SIZE_PRODUCTS,
-  SELLABLE_PRODUCTS,
-} from './src/data/noniseData';
+import { buildCheckout, handleNotify, payfastConfig } from './src/lib/payfast';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT || 3000);
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-
-// The merchant key is public (PayFast forms post it in plain HTML); the
-// optional passphrase is the real secret and must stay in the environment.
-const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || '31790723';
-const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || 'yx6v2da4vda4vdd37';
-const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
-const PAYFAST_HOST =
-  process.env.PAYFAST_SANDBOX === 'true' ? 'sandbox.payfast.co.za' : 'www.payfast.co.za';
-
-// PayFast signs the fields in form order using PHP-style urlencode.
-function payfastEncode(value: string) {
-  return encodeURIComponent(value.trim()).replace(/%20/g, '+');
-}
-
-function payfastSignature(fields: Record<string, string>) {
-  const body = Object.entries(fields)
-    .filter(([, value]) => value !== '')
-    .map(([key, value]) => `${key}=${payfastEncode(value)}`)
-    .join('&');
-  const signed = PAYFAST_PASSPHRASE
-    ? `${body}&passphrase=${payfastEncode(PAYFAST_PASSPHRASE)}`
-    : body;
-  return crypto.createHash('md5').update(signed).digest('hex');
-}
+const PAYFAST = payfastConfig(process.env);
 
 async function startServer() {
   const app = express();
@@ -51,149 +21,20 @@ async function startServer() {
   // Build a signed PayFast payment from the cart. Prices come from the server
   // catalogue, never from the browser.
   app.post('/api/payfast/checkout', (req, res) => {
-    const body = (req.body ?? {}) as Record<string, unknown>;
-
-    const items: {
-      product: (typeof SELLABLE_PRODUCTS)[number];
-      quantity: number;
-      color?: string;
-    }[] = [];
-    for (const raw of Array.isArray(body.items) ? body.items : []) {
-      const entry = (raw ?? {}) as Record<string, unknown>;
-      const product = SELLABLE_PRODUCTS.find((p) => p.id === Number(entry.id));
-      const quantity = Math.floor(Number(entry.quantity));
-      if (product && quantity > 0) {
-        const isRoseSize = ROSE_SIZE_PRODUCTS.some((rose) => rose.id === product.id);
-        const color = isRoseSize ? String(entry.color ?? '').trim() : '';
-        if (isRoseSize && !ROSE_COLOR_OPTIONS.some((option) => option === color)) {
-          return res
-            .status(400)
-            .json({ error: 'Choose a rose colour for every rose bouquet.' });
-        }
-        items.push({
-          product,
-          quantity: Math.min(quantity, 99),
-          color: color || undefined,
-        });
-      }
-    }
-
-    const addonIds = Array.isArray(body.addonIds)
-      ? body.addonIds.filter((id): id is string => typeof id === 'string')
-      : [];
-    const addons = CHECKOUT_ADDONS.filter((addon) => addonIds.includes(addon.id));
-
-    const fulfillment = body.fulfillment === 'collection' ? 'collection' : 'delivery';
-    const subtotal = items.reduce((sum, i) => sum + i.product.priceZAR * i.quantity, 0);
-    const itemsTotal = subtotal + addons.reduce((sum, addon) => sum + addon.priceZAR, 0);
-    const deliveryFee = deliveryFeeZAR(itemsTotal, fulfillment);
-    const amount = itemsTotal + deliveryFee;
-
-    const senderName = String(body.senderName ?? '').trim();
-    const email = String(body.senderEmail ?? '').trim();
-    if (items.length === 0 || !senderName || !email || amount <= 0) {
-      return res.status(400).json({ error: 'A valid cart, name and email are required.' });
-    }
-
-    const [firstName, ...restName] = senderName.split(/\s+/);
-    const reference = `NF-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const origin = (process.env.APP_URL || `${req.protocol}://${req.get('host')}`).replace(
       /\/+$/,
       ''
     );
-    const text = (value: unknown) => String(value ?? '').trim().slice(0, 255);
-
-    const addonSummary = addons.length
-      ? ` + ${addons.map((addon) => addon.label).join(', ')}`
-      : '';
-    const fields: Record<string, string> = {
-      merchant_id: PAYFAST_MERCHANT_ID,
-      merchant_key: PAYFAST_MERCHANT_KEY,
-      return_url: `${origin}/checkout?paid=1&ref=${encodeURIComponent(reference)}`,
-      cancel_url: `${origin}/checkout?cancelled=1`,
-      notify_url: `${origin}/api/payfast/notify`,
-      name_first: firstName.slice(0, 100),
-      name_last: (restName.join(' ') || '-').slice(0, 100),
-      email_address: email.slice(0, 100),
-      cell_number: text(body.senderPhone),
-      m_payment_id: reference,
-      amount: amount.toFixed(2),
-      item_name: 'Nonise Florist order',
-      item_description: `${items
-        .map((i) => `${i.quantity}x ${i.product.name}${i.color ? ` (${i.color})` : ''}`)
-        .join('; ')}${addonSummary}${deliveryFee ? ' + R100 local delivery' : ''}`.slice(0, 255),
-      custom_str1: `Fulfilment: ${fulfillment}`,
-      custom_str2: `Date: ${text(body.deliveryDate)} ${text(body.timeWindow)}`,
-      custom_str3: `Recipient: ${text(body.recipientName)} ${text(body.recipientPhone)} ${text(
-        body.deliveryAddress
-      )} ${text(body.suburb)}`
-        .trim()
-        .slice(0, 255),
-      custom_str4: text(body.cardMessage),
-      custom_str5: text(body.specialInstructions),
-      email_confirmation: '1',
-      confirmation_address: email,
-    };
-    fields.signature = payfastSignature(fields);
-
-    return res.json({
-      processUrl: `https://${PAYFAST_HOST}/eng/process`,
-      fields,
-      reference,
-      subtotal,
-      deliveryFee,
-      amount,
-    });
+    const result = buildCheckout((req.body ?? {}) as Record<string, unknown>, origin, PAYFAST);
+    return res.status(result.status).json(result.body);
   });
 
   // PayFast ITN webhook: verify the signature, confirm the payload with
   // PayFast, then record the result. No order store exists yet, so paid
   // orders are written to the process log for manual reconciliation.
-  // shortcut: log-only order recording, add a database/email alert before volume grows.
   app.post('/api/payfast/notify', async (req, res) => {
-    try {
-      const body = (req.body ?? {}) as Record<string, string>;
-      const { signature, ...fields } = body;
-      if (!signature || payfastSignature(fields) !== signature) {
-        console.warn('[payfast] ITN rejected: signature mismatch');
-        return res.status(400).send('Invalid signature');
-      }
-      if (fields.merchant_id !== PAYFAST_MERCHANT_ID) {
-        console.warn('[payfast] ITN rejected: unknown merchant');
-        return res.status(400).send('Unknown merchant');
-      }
-
-      const check = await fetch(`https://${PAYFAST_HOST}/eng/query/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(body).toString(),
-      });
-      if ((await check.text()).trim() !== 'VALID') {
-        console.warn('[payfast] ITN rejected: PayFast did not validate the payload');
-        return res.status(400).send('Invalid ITN');
-      }
-
-      console.log(
-        '[payfast] ITN',
-        JSON.stringify({
-          reference: fields.m_payment_id,
-          status: fields.payment_status,
-          amount: fields.amount_gross,
-          items: fields.item_description,
-          email: fields.email_address,
-          name: `${fields.name_first ?? ''} ${fields.name_last ?? ''}`.trim(),
-          fulfilment: fields.custom_str1,
-          delivery: fields.custom_str2,
-          recipient: fields.custom_str3,
-          card: fields.custom_str4,
-          notes: fields.custom_str5,
-        })
-      );
-      return res.status(200).send('OK');
-    } catch (error) {
-      console.error('[payfast] ITN error:', error);
-      return res.status(500).send('ITN error');
-    }
+    const result = await handleNotify((req.body ?? {}) as Record<string, unknown>, PAYFAST);
+    return res.status(result.status).send(result.body);
   });
 
   if (IS_PRODUCTION) {

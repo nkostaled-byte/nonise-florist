@@ -1,0 +1,16 @@
+name = "nonise-florist-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Intercept only the API paths on the live zone; the static site keeps
+# serving every other request.
+routes = [
+  { pattern = "noniseflorist.com/api/*", zone_name = "noniseflorist.com" },
+  { pattern = "www.noniseflorist.com/api/*", zone_name = "noniseflorist.com" }
+]
+
+[vars]
+# APP_URL is optional: return/ITN links default to the request origin.
+# PAYFAST_PASSPHRASE must be set with `wrangler secret put` if the account
+# has a security passphrase.
