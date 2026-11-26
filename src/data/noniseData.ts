@@ -37,6 +37,21 @@ export const BUSINESS_INFO = {
   copyrightYear: 2026,
 };
 
+// Flat local delivery fee, waived from the threshold. Used by checkout and the
+// PayFast server so the charged amount always matches what the shopper saw.
+export const DELIVERY = {
+  flatRateZAR: 100,
+  freeFromZAR: 2500,
+};
+
+export function deliveryFeeZAR(
+  orderValueZAR: number,
+  fulfillment: 'delivery' | 'collection'
+): number {
+  if (fulfillment === 'collection' || orderValueZAR >= DELIVERY.freeFromZAR) return 0;
+  return DELIVERY.flatRateZAR;
+}
+
 export const BRAND_STORY = {
   whoWeAre:
     'Nonise Florist is a female-owned floristry business based on Peter Kerchhoff Street in Pietermaritzburg, founded and led by Mrs. Nokwanda Mthembu. The business offers a full range of floristry services including bouquets, flower arrangements, wedding flowers, funeral coffin sprays, party and birthday flowers, gift boxes, anniversary flowers, and corporate and business function florals.',
@@ -271,6 +286,23 @@ const CATALOGUE_CATEGORY_META: Record<
     description: string;
   }
 > = {
+  'basket-arrangements': {
+    label: 'Basket Arrangements',
+    occasions: [
+      'Birthdays & Parties',
+      'Anniversaries & Romance',
+      'Everyday Gifting',
+      'Corporate & Events',
+    ],
+    includes: [
+      'Fresh seasonal flowers arranged in a woven basket',
+      'Signature Nonise Florist ribbon finish',
+      'Complimentary personalised gift card',
+    ],
+    presentation: 'Ready-to-display woven basket arrangement',
+    description:
+      'A hand-arranged floral design set in a woven basket, styled in our Pietermaritzburg studio and ready to display.',
+  },
   'box-arrangements': {
     label: 'Box Arrangements',
     occasions: ['Birthdays & Parties', 'Anniversaries & Romance', 'Everyday Gifting'],
@@ -282,6 +314,17 @@ const CATALOGUE_CATEGORY_META: Record<
     presentation: 'Ready-to-display keepsake hatbox arrangement',
     description:
       'A hand-arranged floral design set in a keepsake hatbox, styled in our Pietermaritzburg studio for effortless gifting and lasting display.',
+  },
+  extras: {
+    label: 'Extras',
+    occasions: ['Birthdays & Parties', 'Everyday Gifting'],
+    includes: [
+      'A finishing touch for any flower gift',
+      'Prepared in our Pietermaritzburg studio',
+    ],
+    presentation: 'Celebration extra',
+    description:
+      'A little extra to complete your flower gift, prepared in our Pietermaritzburg studio.',
   },
   'funeral-flowers': {
     label: 'Funeral Flowers',
@@ -487,6 +530,27 @@ const CATALOGUE_ENTRIES: CatalogueEntry[] = [
   { category: 'vase-arrangements', name: 'Sunflower & Yellow Rose Vase', priceZAR: 1150, blurb: 'Sunflowers and yellow roses with greenery in a glass vase.' },
   { category: 'vase-arrangements', name: 'Sunflower Grand Vase', priceZAR: 1300, blurb: 'A tall sunflower arrangement with yellow craspedia in a glass vase.' },
   { category: 'vase-arrangements', name: 'Protea & Foliage Vase Arrangement', priceZAR: 750, blurb: 'Proteas and textured greenery in a glass vase.' },
+
+  // Basket Arrangements
+  { category: 'basket-arrangements', name: 'Country Garden Flower Basket', priceZAR: 650, blurb: 'Pink and red roses, lilies, thistles and gypsophila in a rustic handled basket.' },
+  { category: 'basket-arrangements', name: 'Ruby Celebration Flower Basket', priceZAR: 680, blurb: 'Red gerberas, carnations and roses finished with a bright red ribbon.' },
+  { category: 'basket-arrangements', name: 'Sunshine Meadow Flower Basket', priceZAR: 680, blurb: 'Yellow roses, white chrysanthemums, orange carnations and eucalyptus.' },
+  { category: 'basket-arrangements', name: 'Roses & Ferrero Gift Basket', priceZAR: 850, blurb: 'Roses and tulips paired with Ferrero Rocher and Appletiser in a handled basket.' },
+  { category: 'basket-arrangements', name: 'Pink Blush Flower Basket', priceZAR: 720, blurb: 'Pink roses, gerberas, lilies and snapdragons gathered in a rustic basket.' },
+  { category: 'basket-arrangements', name: 'Red Rose & Chocolate Basket', priceZAR: 950, blurb: 'Red roses arranged with a box of chocolate seashells.' },
+  { category: 'basket-arrangements', name: 'Golden Lily Flower Basket', priceZAR: 750, blurb: 'Yellow lilies, orange blooms, white chrysanthemums and a single red rose.' },
+  { category: 'basket-arrangements', name: 'Autumn Glow Flower Basket', priceZAR: 850, blurb: 'Red roses, orange lilies, berries and eucalyptus with an orange ribbon.' },
+  { category: 'basket-arrangements', name: 'Pastel Celebration Flower Basket', priceZAR: 850, blurb: 'Pink, white and orange roses with chrysanthemums and a pink bow.' },
+  { category: 'basket-arrangements', name: 'Ivory Elegance Flower Basket', priceZAR: 550, blurb: 'White roses, cream lisianthus and gypsophila in a small woven basket.' },
+  { category: 'basket-arrangements', name: 'Pink & Lilac Flower Basket', priceZAR: 650, blurb: 'Pink roses, alstroemeria and chrysanthemums with lilac accents.' },
+  { category: 'basket-arrangements', name: 'Peach Gerbera Flower Basket', priceZAR: 650, blurb: 'A peach gerbera with purple lisianthus and pink roses in a woven basket.' },
+  { category: 'basket-arrangements', name: 'Blush Alstroemeria Flower Basket', priceZAR: 850, blurb: 'Pink alstroemeria, chrysanthemums and roses with soft eucalyptus.' },
+  { category: 'basket-arrangements', name: 'Citrus Sunrise Flower Basket', priceZAR: 650, blurb: 'Orange and yellow gerberas, yellow roses and eucalyptus.' },
+  { category: 'basket-arrangements', name: 'Lemon & Lilac Flower Basket', priceZAR: 550, blurb: 'Yellow and white chrysanthemums, yellow roses and purple accents.' },
+
+  // Extras
+  { category: 'extras', name: 'Dried Rose Petal Pouch', priceZAR: 35, blurb: 'A kraft pouch of naturally dried rose petals for scattering or styling.' },
+  { category: 'extras', name: 'Foil Balloon', priceZAR: 50, blurb: 'A helium-ready foil balloon in an assorted celebration design.' },
 ];
 
 function slugifyName(name: string): string {
@@ -519,29 +583,33 @@ const CATALOGUE_PRODUCTS: Product[] = CATALOGUE_ENTRIES.map((entry, index) => {
   };
 });
 
-const ROSE_SIZES = [10, 20, 30, 50] as const;
+const ROSE_SIZES = [10, 15, 20, 30, 40, 50, 100] as const;
 
+// One price list for every rose colour; the shopper picks the colour when buying.
+export const ROSE_COLOR_OPTIONS = ['Red', 'White', 'Pink', 'Mixed'] as const;
+
+export const ROSE_COLOR_SWATCHES: Record<(typeof ROSE_COLOR_OPTIONS)[number], string> = {
+  Red: '#B3122F',
+  White: '#F4EFE6',
+  Pink: '#E7A6B8',
+  Mixed: 'conic-gradient(#B3122F, #E7A6B8, #F4EFE6, #C77E93, #B3122F)',
+};
+
+// Prices follow the studio rose price list (26 Nov 2026): plain vs with gyp.
 const ROSE_SIZE_GROUPS = [
   {
-    arrangement: 'Red Roses',
-    slugBase: 'red-roses',
+    arrangement: 'Roses',
+    slugBase: 'roses',
     image: '/assets/nonise/ruby-red-rose-statement-bouquet.webp',
-    blurb: 'Classic red roses hand-tied in our signature wrap.',
-    prices: [400, 800, 1200, 2000],
+    blurb: 'Fresh roses hand-tied in our signature wrap.',
+    prices: [250, 400, 500, 750, 1000, 1250, 2500],
   },
   {
-    arrangement: 'Red Roses with Gyp',
-    slugBase: 'red-roses-with-gyp',
+    arrangement: 'Roses with Gyp',
+    slugBase: 'roses-with-gyp',
     image: '/assets/nonise/classic-red-rose-bouquet.webp',
-    blurb: 'Red roses with delicate gypsophila in a natural wrap.',
-    prices: [500, 900, 1300, 2200],
-  },
-  {
-    arrangement: 'Pink / White Roses',
-    slugBase: 'pink-white-roses',
-    image: '/assets/nonise/blush-pink-rose-and-gypsophila-bouquet.webp',
-    blurb: 'Soft pink and white roses with gypsophila in a kraft wrap.',
-    prices: [300, 600, 900, 1500],
+    blurb: 'Fresh roses with delicate gypsophila in a natural wrap.',
+    prices: [350, 500, 600, 900, 1200, 1500, 3000],
   },
 ] as const;
 
@@ -557,12 +625,12 @@ export const ROSE_SIZE_GUIDE = {
     { label: 'Mixed bouquets', price: 'From R200' },
     { label: 'Flower boxes', price: 'From R650' },
     { label: 'Romantic hampers', price: 'From R850' },
-    { label: 'Foil balloons', price: 'R40' },
+    { label: 'Foil balloons', price: 'R50' },
   ],
 };
 
 // Each rose size is a real cart product so the comparison table can add it to the bag.
-// They stay out of PRODUCTS so the grid does not repeat the same 12 options twice.
+// They stay out of PRODUCTS so the grid does not repeat the same 14 options twice.
 export const ROSE_SIZE_PRODUCTS: Product[] = ROSE_SIZE_GROUPS.flatMap((group, groupIndex) =>
   group.prices.map((price, sizeIndex) => {
     const size = ROSE_SIZES[sizeIndex];
@@ -574,9 +642,10 @@ export const ROSE_SIZE_PRODUCTS: Product[] = ROSE_SIZE_GROUPS.flatMap((group, gr
       priceZAR: price,
       wooCategory: 'Rose Bouquets',
       specialty: 'rose-bouquets',
+      colorOptions: [...ROSE_COLOR_OPTIONS],
       occasions: ['Anniversaries & Romance', 'Birthdays & Parties', 'Everyday Gifting'],
-      shortDescription: `${group.blurb} ${size} stems.`,
-      description: `${group.blurb} This arrangement includes ${size} fresh roses, hand-tied and finished with our signature wrap and ribbon.`,
+      shortDescription: `${group.blurb} ${size} stems. Choose red, white, pink or mixed.`,
+      description: `${group.blurb} This arrangement includes ${size} fresh roses, hand-tied and finished with our signature wrap and ribbon. Choose red, white, pink or mixed roses when adding it to your bag.`,
       images: [group.image],
       altText: `${name} by Nonise Florist in Pietermaritzburg`,
       includes: [
@@ -591,7 +660,21 @@ export const ROSE_SIZE_PRODUCTS: Product[] = ROSE_SIZE_GROUPS.flatMap((group, gr
   })
 );
 
+// Fail the build if the price table and the cart catalogue drift apart.
+if (
+  ROSE_SIZE_GUIDE.rows.some((row) =>
+    ROSE_SIZES.some(
+      (size) => !ROSE_SIZE_PRODUCTS.some((product) => product.slug === `${row.slugBase}-${size}`)
+    )
+  )
+) {
+  throw new Error('Rose price table is missing a cart product');
+}
+
 export const PRODUCTS: Product[] = [...SIGNATURE_PRODUCTS, ...CATALOGUE_PRODUCTS];
+
+// Every product that can sit in a bag, including the rose-size price table.
+export const SELLABLE_PRODUCTS: Product[] = [...PRODUCTS, ...ROSE_SIZE_PRODUCTS];
 
 // Fail the build rather than ship two products that resolve to the same URL.
 if (new Set(PRODUCTS.map((product) => product.slug)).size !== PRODUCTS.length) {
@@ -879,7 +962,9 @@ const CURATED_GALLERY_PHOTOS: GalleryPhoto[] = [
 ];
 
 const GALLERY_COLLECTION_BY_SPECIALTY: Record<ShopCategory, GalleryPhoto['collection']> = {
+  'basket-arrangements': 'Basket Arrangements',
   'box-arrangements': 'Box Arrangements',
+  extras: 'Extras',
   'funeral-flowers': 'Funeral & Sympathy',
   'funeral-package-sets': 'Funeral & Sympathy',
   hampers: 'Gift Hampers',
@@ -915,8 +1000,8 @@ export const CHECKOUT_ADDONS: CheckoutAddon[] = [
   { id: 'champagne', label: 'Champagne', priceZAR: 950, fromPrice: true },
   { id: 'chocolates', label: 'Chocolates', priceZAR: 300, fromPrice: true },
   { id: 'wine', label: 'Wine', priceZAR: 550, fromPrice: true },
-  { id: 'balloons', label: 'Balloons', priceZAR: 50 },
-  { id: 'petals', label: 'Dry flower petals', priceZAR: 35 },
+  { id: 'balloons', label: 'Balloons', priceZAR: 50, image: '/assets/nonise/foil-balloon-640.webp' },
+  { id: 'petals', label: 'Dry flower petals', priceZAR: 35, image: '/assets/nonise/dried-rose-petal-pouch-640.webp' },
 ];
 
 export function formatZAR(amount: number): string {

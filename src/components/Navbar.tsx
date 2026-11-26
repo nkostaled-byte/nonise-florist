@@ -54,7 +54,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       return () => window.cancelAnimationFrame(raf);
     } else if (drawerMounted) {
       setDrawerVisible(false);
-      const timer = window.setTimeout(() => setDrawerMounted(false), 320);
+      // Outlast the 340ms slide so the panel finishes leaving the screen.
+      const timer = window.setTimeout(() => setDrawerMounted(false), 360);
       return () => window.clearTimeout(timer);
     }
   }, [mobileMenuOpen, drawerMounted]);

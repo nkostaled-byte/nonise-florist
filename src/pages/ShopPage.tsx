@@ -1,6 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react';
-import { PRODUCTS, ROSE_SIZE_GUIDE, ROSE_SIZE_PRODUCTS } from '../data/noniseData';
+import {
+  PRODUCTS,
+  ROSE_COLOR_OPTIONS,
+  ROSE_COLOR_SWATCHES,
+  ROSE_SIZE_GUIDE,
+  ROSE_SIZE_PRODUCTS,
+} from '../data/noniseData';
 import { LANDING_LINKS, LANDING_PAGES } from '../data/landingPages';
 import { RouteState, pathFor } from '../lib/routes';
 import { Product, SpecialtyKey } from '../types';
@@ -13,18 +19,20 @@ interface ShopPageProps {
   onNavigateRoute?: (route: RouteState) => void;
   onSelectCategory: (filter: SpecialtyKey) => void;
   onSelectProduct: (product: Product) => void;
-  onQuickAdd: (product: Product) => void;
+  onQuickAdd: (product: Product, options?: { color?: string }) => void;
   onStartInquiry: (topic: string) => void;
 }
 
 const FILTER_TABS: { key: SpecialtyKey; label: string }[] = [
   { key: 'all', label: 'All Arrangements' },
+  { key: 'basket-arrangements', label: 'Baskets' },
   { key: 'box-arrangements', label: 'Box Arrangements' },
   { key: 'rose-bouquets', label: 'Rose Bouquets' },
   { key: 'mixed-bouquets', label: 'Mixed Bouquets' },
   { key: 'protea-bouquets', label: 'Protea Bouquets' },
   { key: 'vase-arrangements', label: 'Vase Arrangements' },
   { key: 'hampers', label: 'Hamper' },
+  { key: 'extras', label: 'Extras' },
   { key: 'funeral-flowers', label: 'Funeral Flowers' },
   { key: 'funeral-package-sets', label: 'Funeral Packages' },
 ];
@@ -44,6 +52,18 @@ const SHOP_HEADINGS: Record<
     h1: 'Flower Box Arrangements in Pietermaritzburg',
     intro:
       'Hand-arranged hatboxes and flower boxes for birthdays, anniversaries and thoughtful gifting, delivered fresh across Pietermaritzburg.',
+  },
+  'basket-arrangements': {
+    eyebrow: 'Basket Arrangements',
+    h1: 'Flower Baskets in Pietermaritzburg',
+    intro:
+      'Hand-arranged flower baskets for birthdays, anniversaries and thoughtful gifting, delivered fresh across Pietermaritzburg.',
+  },
+  extras: {
+    eyebrow: 'Extras',
+    h1: 'Flower Gift Extras in Pietermaritzburg',
+    intro:
+      'Dried rose petals and foil balloons to finish your flower gift, ready for local delivery or studio collection.',
   },
   'funeral-flowers': {
     eyebrow: 'Funeral Flowers',
@@ -89,9 +109,12 @@ const SHOP_HEADINGS: Record<
   },
 };
 
-const RoseSizeGuide: React.FC<{ onQuickAdd: (product: Product) => void }> = ({
-  onQuickAdd,
-}) => (
+const RoseSizeGuide: React.FC<{
+  onQuickAdd: (product: Product, options?: { color?: string }) => void;
+}> = ({ onQuickAdd }) => {
+  const [selectedColor, setSelectedColor] = useState('');
+
+  return (
   <RevealSection className="mb-10">
     <div className="bg-white border border-[#EFE8DC] rounded-sm p-5 sm:p-7">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
@@ -102,12 +125,48 @@ const RoseSizeGuide: React.FC<{ onQuickAdd: (product: Product) => void }> = ({
           </h2>
         </div>
         <p className="text-[12px] text-[#8B7073]">
-          Prices per arrangement &middot; select a price to add to bag
+          One price per size &middot; same price for every colour
+        </p>
+      </div>
+
+      <div className="mb-5 rounded-sm border border-[#EFE8DC] bg-[#FDFBF7] p-3.5 sm:p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#8B7073]">
+            1. Choose your rose colour
+          </span>
+          {ROSE_COLOR_OPTIONS.map((option) => {
+            const active = selectedColor === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setSelectedColor(option)}
+                className={`btn-editorial inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors cursor-pointer ${
+                  active
+                    ? 'border-[#AB274A] bg-[#AB274A] text-white'
+                    : 'border-[#EFE8DC] bg-white text-[#2F1B2E] hover:border-[#AB274A]'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-2.5 w-2.5 rounded-full border border-black/10"
+                  style={{ background: ROSE_COLOR_SWATCHES[option] }}
+                />
+                {option}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-[12px] text-[#584144]" aria-live="polite">
+          {selectedColor
+            ? `Selected: ${selectedColor}. Now choose a size below.`
+            : 'Pick a colour, then choose a size below to add it to your bag.'}
         </p>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-left border-collapse">
+        <table className="w-full min-w-[760px] text-left border-collapse">
           <thead>
             <tr className="border-b border-[#EFE8DC]">
               <th
@@ -140,15 +199,19 @@ const RoseSizeGuide: React.FC<{ onQuickAdd: (product: Product) => void }> = ({
                   <td key={ROSE_SIZE_GUIDE.sizes[index]} className="py-2 px-1.5 text-center">
                     <button
                       type="button"
-                      aria-label={`Add ${ROSE_SIZE_GUIDE.sizes[index]} ${row.arrangement} to bag`}
+                      disabled={!selectedColor}
+                      title={selectedColor ? undefined : 'Choose a rose colour first'}
+                      aria-label={`Add ${ROSE_SIZE_GUIDE.sizes[index]} ${row.arrangement}${selectedColor ? ` in ${selectedColor}` : ''} to bag`}
                       onClick={() => {
                         const product = ROSE_SIZE_PRODUCTS.find(
                           (item) =>
                             item.slug === `${row.slugBase}-${ROSE_SIZE_GUIDE.sizes[index]}`
                         );
-                        if (product) onQuickAdd(product);
+                        if (product && selectedColor) {
+                          onQuickAdd(product, { color: selectedColor });
+                        }
                       }}
-                      className="btn-editorial w-full px-2 py-2 rounded-sm border border-[#EFE8DC] text-[13px] font-semibold tabular-price text-[#2F1B2E] hover:border-[#AB274A] hover:bg-[#F7EFE3] transition-colors cursor-pointer"
+                      className="btn-editorial w-full px-2 py-2 rounded-sm border border-[#EFE8DC] text-[13px] font-semibold tabular-price text-[#2F1B2E] hover:border-[#AB274A] hover:bg-[#F7EFE3] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[#EFE8DC] disabled:hover:bg-white"
                     >
                       R{price.toLocaleString('en-ZA')}
                     </button>
@@ -171,7 +234,8 @@ const RoseSizeGuide: React.FC<{ onQuickAdd: (product: Product) => void }> = ({
       </div>
     </div>
   </RevealSection>
-);
+  );
+};
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc';
 

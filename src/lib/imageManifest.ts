@@ -135,6 +135,23 @@ export const IMAGE_META: Record<string, ImageMeta> = {
   "/assets/nonise/sunflower-and-yellow-rose-vase.webp": { width: 900, height: 1600, has640: true },
   "/assets/nonise/sunflower-grand-vase.webp": { width: 903, height: 1600, has640: true },
   "/assets/nonise/protea-and-foliage-vase-arrangement.webp": { width: 1079, height: 1475, has640: true },
+  "/assets/nonise/country-garden-flower-basket.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/ruby-celebration-flower-basket.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/sunshine-meadow-flower-basket.webp": { width: 1200, height: 1600, has640: true },
+  "/assets/nonise/roses-and-ferrero-gift-basket.webp": { width: 1080, height: 810, has640: true },
+  "/assets/nonise/pink-blush-flower-basket.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/red-rose-and-chocolate-basket.webp": { width: 1200, height: 1152, has640: true },
+  "/assets/nonise/golden-lily-flower-basket.webp": { width: 1080, height: 1296, has640: true },
+  "/assets/nonise/autumn-glow-flower-basket.webp": { width: 960, height: 871, has640: true },
+  "/assets/nonise/pastel-celebration-flower-basket.webp": { width: 900, height: 1048, has640: true },
+  "/assets/nonise/ivory-elegance-flower-basket.webp": { width: 900, height: 1073, has640: true },
+  "/assets/nonise/pink-and-lilac-flower-basket.webp": { width: 900, height: 1106, has640: true },
+  "/assets/nonise/peach-gerbera-flower-basket.webp": { width: 720, height: 1280, has640: true },
+  "/assets/nonise/blush-alstroemeria-flower-basket.webp": { width: 900, height: 1030, has640: true },
+  "/assets/nonise/citrus-sunrise-flower-basket.webp": { width: 960, height: 1280, has640: true },
+  "/assets/nonise/lemon-and-lilac-flower-basket.webp": { width: 1200, height: 1366, has640: true },
+  "/assets/nonise/dried-rose-petal-pouch.webp": { width: 1086, height: 1448, has640: true },
+  "/assets/nonise/foil-balloon.webp": { width: 883, height: 1600, has640: true },
 };
 
 export interface ResponsiveImageAttrs {

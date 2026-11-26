@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ShoppingBag } from 'lucide-react';
-import { PRODUCTS } from './data/noniseData';
+import { PRODUCTS, SELLABLE_PRODUCTS } from './data/noniseData';
 import { LANDING_PAGES } from './data/landingPages';
 import { CartItem, ConfirmedOrder, PageView, Product, SpecialtyKey } from './types';
 import {
@@ -55,7 +55,28 @@ export default function App({ initialRoute: providedRoute }: AppProps = {}) {
       const saved = window.localStorage.getItem(CART_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as CartItem[];
-        if (Array.isArray(parsed)) setCartItems(parsed);
+        if (Array.isArray(parsed)) {
+          // Re-price saved bags from the current catalogue so stale prices
+          // never disagree with what checkout charges.
+          setCartItems(
+            parsed.flatMap((item) => {
+              const product = SELLABLE_PRODUCTS.find((p) => p.id === item.product?.id);
+              // Rose bouquets now require a colour at checkout. Drop lines saved
+              // before colour selection existed so the shopper re-adds them
+              // instead of hitting a checkout error they cannot resolve.
+              if (!product || (product.colorOptions?.length && !item.color)) return [];
+              return [
+                {
+                  ...item,
+                  product,
+                  cartKey: `${product.id}__${item.deliveryDate || ''}__${
+                    item.color || ''
+                  }__${item.giftMessage || ''}`,
+                },
+              ];
+            })
+          );
+        }
       }
     } catch {
       // Ignore storage errors in private contexts
@@ -204,11 +225,12 @@ export default function App({ initialRoute: providedRoute }: AppProps = {}) {
   const handleAddToCart = (
     product: Product,
     quantity = 1,
-    options?: { giftMessage?: string; deliveryDate?: string }
+    options?: { giftMessage?: string; deliveryDate?: string; color?: string }
   ) => {
     const giftMsg = options?.giftMessage?.trim() || '';
     const delDate = options?.deliveryDate || '';
-    const cartKey = `${product.id}__${delDate}__${giftMsg}`;
+    const color = options?.color || '';
+    const cartKey = `${product.id}__${delDate}__${color}__${giftMsg}`;
 
     setCartItems((prev) => {
       const existingIndex = prev.findIndex((item) => item.cartKey === cartKey);
@@ -223,13 +245,14 @@ export default function App({ initialRoute: providedRoute }: AppProps = {}) {
           cartKey,
           product,
           quantity,
+          color: color || undefined,
           giftMessage: giftMsg || undefined,
           deliveryDate: delDate || undefined,
         },
       ];
     });
 
-    showToast(`Added ${product.name} to your bag`);
+    showToast(`Added ${product.name}${color ? ` (${color})` : ''} to your bag`);
   };
 
   const handleUpdateQuantity = (cartKey: string, delta: number) => {
@@ -248,6 +271,11 @@ export default function App({ initialRoute: providedRoute }: AppProps = {}) {
 
   const handleOrderConfirmed = (_order: ConfirmedOrder) => {
     setCartItems([]);
+    try {
+      window.localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // Ignore storage errors in private contexts
+    }
   };
 
   // Keyed solely by route + active product so cart updates never re-trigger page transitions
@@ -286,7 +314,7 @@ export default function App({ initialRoute: providedRoute }: AppProps = {}) {
               onNavigateRoute={handleNavigateRoute}
               onSelectCategory={handleSelectCategory}
               onSelectProduct={handleSelectProduct}
-              onQuickAdd={(product) => handleAddToCart(product, 1)}
+              onQuickAdd={(product, options) => handleAddToCart(product, 1, options)}
               onStartInquiry={handleStartInquiry}
             />
           )}

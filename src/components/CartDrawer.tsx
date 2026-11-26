@@ -36,7 +36,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       return () => window.cancelAnimationFrame(raf);
     } else if (mounted) {
       setVisible(false);
-      const timer = window.setTimeout(() => setMounted(false), 320);
+      // Outlast the 340ms slide so the panel finishes leaving the screen.
+      const timer = window.setTimeout(() => setMounted(false), 360);
       return () => window.clearTimeout(timer);
     }
   }, [open, mounted]);
@@ -138,7 +139,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => onRemoveItem(item.cartKey)}
-                          aria-label={`Remove ${item.product.name}`}
+                          aria-label={`Remove ${item.product.name}${item.color ? ` in ${item.color}` : ''}`}
                           className="btn-editorial p-1 text-[#8B7073] hover:text-[#AB274A] cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -147,6 +148,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       <p className="text-[14px] font-semibold text-[#1B1C1A] tabular-price mt-0.5">
                         {formatZAR(item.product.priceZAR)}
                       </p>
+                      {item.color && (
+                        <p className="text-[12px] text-[#3E5B42] mt-1">Colour: {item.color}</p>
+                      )}
                       {item.deliveryDate && (
                         <p className="text-[12px] text-[#3E5B42] mt-1">
                           Preferred date: {item.deliveryDate}
@@ -164,7 +168,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => onUpdateQuantity(item.cartKey, -1)}
-                          aria-label={`Decrease quantity of ${item.product.name}`}
+                          aria-label={`Decrease quantity of ${item.product.name}${item.color ? ` in ${item.color}` : ''}`}
                           className="w-8 h-8 inline-flex items-center justify-center text-[#2F1B2E] hover:bg-[#F7EFE3] active:scale-95 transition-all cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
@@ -175,7 +179,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => onUpdateQuantity(item.cartKey, 1)}
-                          aria-label={`Increase quantity of ${item.product.name}`}
+                          aria-label={`Increase quantity of ${item.product.name}${item.color ? ` in ${item.color}` : ''}`}
                           className="w-8 h-8 inline-flex items-center justify-center text-[#2F1B2E] hover:bg-[#F7EFE3] active:scale-95 transition-all cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />

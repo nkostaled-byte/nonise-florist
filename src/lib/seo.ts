@@ -189,6 +189,18 @@ const COLLECTION_META: Record<
       'Hand-arranged flower boxes and hatboxes for birthdays, anniversaries and gifting in Pietermaritzburg. Fresh blooms, local delivery, order online.',
     name: 'Box Arrangements',
   },
+  'basket-arrangements': {
+    title: 'Flower Basket Arrangements | Nonise Florist Pietermaritzburg',
+    description:
+      'Hand-arranged flower baskets with fresh seasonal blooms, delivered across Pietermaritzburg by Nonise Florist. Order online for local delivery.',
+    name: 'Basket Arrangements',
+  },
+  extras: {
+    title: 'Flower Gift Extras | Nonise Florist Pietermaritzburg',
+    description:
+      'Add dried rose petals or a foil balloon to your flower gift from Nonise Florist in Pietermaritzburg. Local delivery or studio collection.',
+    name: 'Extras',
+  },
   'funeral-flowers': {
     title: 'Funeral Flowers & Tributes | Nonise Florist Pietermaritzburg',
     description:

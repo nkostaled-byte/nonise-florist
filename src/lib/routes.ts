@@ -15,7 +15,9 @@ export interface RouteState {
 type ShopFilterKey = Exclude<SpecialtyKey, 'all' | 'events'>;
 
 const COLLECTION_SLUGS = [
+  'basket-arrangements',
   'box-arrangements',
+  'extras',
   'funeral-flowers',
   'funeral-package-sets',
   'hampers',

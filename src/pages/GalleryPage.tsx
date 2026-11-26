@@ -17,8 +17,10 @@ const COLLECTIONS: Array<'All' | GalleryPhoto['collection']> = [
   'Mixed Bouquets',
   'Protea Bouquets',
   'Vase Arrangements',
+  'Basket Arrangements',
   'Box Arrangements',
   'Gift Hampers',
+  'Extras',
   'Funeral & Sympathy',
   'Weddings & Events',
 ];

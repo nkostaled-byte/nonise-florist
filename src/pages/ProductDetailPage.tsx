@@ -25,7 +25,7 @@ interface ProductDetailPageProps {
   onAddToCart: (
     product: Product,
     quantity: number,
-    options?: { giftMessage?: string; deliveryDate?: string }
+    options?: { giftMessage?: string; deliveryDate?: string; color?: string }
   ) => void;
 }
 
@@ -40,6 +40,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [giftMessage, setGiftMessage] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [color, setColor] = useState(product.colorOptions?.[0] ?? '');
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<'delivery' | 'care' | null>('delivery');
 
@@ -56,6 +57,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     onAddToCart(product, quantity, {
       giftMessage: giftMessage.trim() || undefined,
       deliveryDate: deliveryDate || undefined,
+      color: color || undefined,
     });
     setAddedFeedback(true);
     window.setTimeout(() => setAddedFeedback(false), 1800);
@@ -226,6 +228,31 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
               </div>
 
+              {product.colorOptions && product.colorOptions.length > 0 && (
+                <div className="pt-1">
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#2F1B2E] mb-1.5">
+                    Rose Colour
+                  </p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Rose colour">
+                    {product.colorOptions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        aria-pressed={color === option}
+                        onClick={() => setColor(option)}
+                        className={`px-4 py-2 min-h-[40px] rounded-sm border text-[13px] font-medium transition-colors cursor-pointer ${
+                          color === option
+                            ? 'border-[#3E5B42] bg-[#F3F6F1] text-[#2F1B2E]'
+                            : 'border-[#EFE8DC] bg-white text-[#584144] hover:border-[#C5A059]'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Quantity & Primary Add to Bag CTA */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
                 <div className="inline-flex items-center justify-between sm:justify-center border border-[#EFE8DC] bg-white rounded-sm min-h-[50px]">
@@ -308,6 +335,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                           Hand-delivered across Pietermaritzburg and surrounding areas, or collect
                           directly from our studio at{' '}
                           <strong className="text-[#2F1B2E]">{BUSINESS_INFO.fullAddress}</strong>.
+                          Local delivery is a flat R100, free on orders from R2,500.
                         </p>
                         <p className="flex items-center gap-1.5 text-[#3E5B42] font-medium">
                           <MapPin className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />

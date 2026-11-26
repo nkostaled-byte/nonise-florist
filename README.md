@@ -48,3 +48,11 @@ Pietermaritzburg's heartfelt floral boutique led by Mrs. Nokwanda Mthembu — fr
 | `INSTAGRAM_ACCESS_TOKEN` | Server-side long-lived access token for the `@nonise.florist` Instagram Professional account. |
 | `INSTAGRAM_USER_ID` | Optional Instagram User / Business Account ID. Defaults to `me`. |
 | `INSTAGRAM_API_HOST` | `instagram` (default) for `graph.instagram.com`, or `facebook` for `graph.facebook.com`. |
+| `PAYFAST_MERCHANT_ID` | PayFast merchant ID. Defaults to the Nonise Florist account. |
+| `PAYFAST_MERCHANT_KEY` | PayFast merchant key (public, posted in the payment form). |
+| `PAYFAST_PASSPHRASE` | Optional security passphrase from the PayFast dashboard. Set this if the account has one. |
+| `PAYFAST_SANDBOX` | `true` sends payments to the PayFast sandbox instead of live. |
+
+## Payments
+
+Checkout redirects to PayFast with a signed payment request (`POST /api/payfast/checkout`). PayFast reports the result to `POST /api/payfast/notify`, which verifies the signature, re-validates the payload with PayFast, and writes the paid order to the server log. There is no order database yet, so reconcile paid orders from the log (or ask the customer to send the order summary via WhatsApp/email, as the confirmation page prompts).

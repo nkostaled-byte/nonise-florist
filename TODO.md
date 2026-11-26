@@ -35,14 +35,14 @@ Legend: `[x]` done · `[ ]` still open
 
 - [x] More rose photography (15 rose products, 12 new).
 - [x] Rose size and price comparison table added to the Rose Bouquets shop view.
-- [x] Sizes displayed: 10, 20, 30 and 50 roses.
-- [x] Price rows from the client price list:
-  - Red Roses: R400 / R800 / R1,200 / R2,000
-  - Red Roses with Gyp: R500 / R900 / R1,300 / R2,200
-  - Pink / White Roses: R300 / R600 / R900 / R1,500
-- [x] “Also available” line: mixed bouquets from R200, flower boxes from R650, romantic hampers from R850, foil balloons R40.
-- [x] Selecting a price adds that exact rose size to the shopping bag, with checkout handled by the normal cart.
-- [x] All 12 rose-size options are cart products driven by the table, so the rose grid does not repeat the same options twice.
+- [x] Sizes displayed: 10, 15, 20, 30, 40, 50 and 100 roses.
+- [x] Two price rows from the client price list; the price is the same for every colour:
+  - Roses: R250 / R400 / R500 / R750 / R1,000 / R1,250 / R2,500
+  - Roses with Gyp: R350 / R500 / R600 / R900 / R1,200 / R1,500 / R3,000
+- [x] Customer picks Red, White, Pink or Mixed at the same price; the colour travels through the cart, checkout, PayFast description and order confirmation.
+- [x] “Also available” line: mixed bouquets from R200, flower boxes from R650, romantic hampers from R850, foil balloons R50.
+- [x] Selecting a colour and price adds that exact rose size to the shopping bag, with checkout handled by the normal cart.
+- [x] All 14 rose-size options are cart products driven by the table, so the rose grid does not repeat the same options twice.
 
 ## 5. Add-ons Before Checkout
 
@@ -89,7 +89,7 @@ Legend: `[x]` done · `[ ]` still open
 ## Implementation Notes
 
 - 91 products and 108 gallery photos in total.
-- 12 rose-size cart options are generated from the studio price list and are bought from the comparison table.
+- 14 rose-size cart options are generated from the studio price list and are bought from the comparison table.
 - `npm run lint` and `npm run build` pass.
 - Product image filenames match product slugs.
 - Legacy collection URLs redirect to the renamed categories.

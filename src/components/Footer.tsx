@@ -319,7 +319,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onNavigateRoute }) =
                 <p>
                   We deliver fresh bouquets and floral arrangements across Pietermaritzburg during
                   trading hours (Monday–Friday, 8:00 AM – 4:30 PM; Saturday, 8:00 AM – 1:00 PM).
-                  Complimentary in-store collection is also available at{' '}
+                  Local delivery is a flat R100, free on orders from R2,500. Complimentary
+                  in-store collection is also available at{' '}
                   <strong>{BUSINESS_INFO.fullAddress}</strong>.
                 </p>
               </div>

@@ -9,7 +9,7 @@ import {
   Store,
   Truck,
 } from 'lucide-react';
-import { BUSINESS_INFO, CHECKOUT_ADDONS, formatZAR } from '../data/noniseData';
+import { BUSINESS_INFO, CHECKOUT_ADDONS, deliveryFeeZAR, formatZAR } from '../data/noniseData';
 import { CartItem, ConfirmedOrder } from '../types';
 import { RevealSection } from '../components/RevealSection';
 
@@ -77,7 +77,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   const selectedAddons = CHECKOUT_ADDONS.filter((addon) => addonIds.includes(addon.id));
   const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.priceZAR, 0);
-  const orderTotal = subtotal + addonsTotal;
+  const deliveryFee = deliveryFeeZAR(subtotal + addonsTotal, fulfillment);
+  const orderTotal = subtotal + addonsTotal + deliveryFee;
 
   const toggleAddon = (id: string) => {
     setAddonIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
@@ -89,6 +90,35 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   }, [items]);
   const [confirmedOrder, setConfirmedOrder] = useState<ConfirmedOrder | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
+
+  // PayFast sends the shopper back here after paying or cancelling.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+
+    if (params.get('paid') === '1' && ref) {
+      try {
+        const saved = window.sessionStorage.getItem(`nonise_pending_order_${ref}`);
+        if (saved) {
+          const order = JSON.parse(saved) as ConfirmedOrder;
+          setConfirmedOrder(order);
+          onOrderConfirmed(order);
+          window.sessionStorage.removeItem(`nonise_pending_order_${ref}`);
+        }
+      } catch {
+        // Ignore storage errors in private contexts
+      }
+      window.history.replaceState(window.history.state, '', '/checkout');
+    } else if (params.get('cancelled') === '1') {
+      setPaymentNotice(
+        'Payment was cancelled — your bag is still saved. You can try again when you are ready.'
+      );
+      window.history.replaceState(window.history.state, '', '/checkout');
+    }
+  }, []);
 
   const selectedDateIsSaturday = useMemo(() => {
     if (!deliveryDate) return false;
@@ -99,48 +129,138 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     ? ['Saturday Studio Window (8:30 AM – 12:30 PM)']
     : ['Morning (8:30 AM – 12:30 PM)', 'Afternoon (12:30 PM – 4:00 PM)'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || isRedirecting) return;
 
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    const order: ConfirmedOrder = {
-      reference: `NF-${BUSINESS_INFO.copyrightYear}-${randomDigits}`,
-      createdAt: new Date().toLocaleString('en-ZA'),
-      fulfillment,
-      deliveryDate,
-      timeWindow: selectedDateIsSaturday ? timeSlots[0] : timeWindow,
-      senderName: senderName.trim(),
-      senderPhone: senderPhone.trim(),
-      senderEmail: senderEmail.trim(),
-      recipientName: fulfillment === 'delivery' ? recipientName.trim() : undefined,
-      recipientPhone: fulfillment === 'delivery' ? recipientPhone.trim() : undefined,
-      deliveryAddress: fulfillment === 'delivery' ? deliveryAddress.trim() : undefined,
-      suburb: fulfillment === 'delivery' ? suburb.trim() : undefined,
-      cardMessage: cardMessage.trim() || undefined,
-      specialInstructions: specialInstructions.trim() || undefined,
-      items: [...items],
-      addons: selectedAddons,
-      subtotalZAR: subtotal,
-      totalZAR: orderTotal,
-    };
+    setIsRedirecting(true);
+    setPaymentError(null);
+    setPaymentNotice(null);
 
-    setConfirmedOrder(order);
-    onOrderConfirmed(order);
+    const windowLabel = selectedDateIsSaturday ? timeSlots[0] : timeWindow;
+
+    try {
+      const response = await fetch('/api/payfast/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.product.id,
+            quantity: item.quantity,
+            color: item.color,
+          })),
+          addonIds,
+          fulfillment,
+          deliveryDate,
+          timeWindow: windowLabel,
+          senderName: senderName.trim(),
+          senderPhone: senderPhone.trim(),
+          senderEmail: senderEmail.trim(),
+          recipientName: fulfillment === 'delivery' ? recipientName.trim() : '',
+          recipientPhone: fulfillment === 'delivery' ? recipientPhone.trim() : '',
+          deliveryAddress: fulfillment === 'delivery' ? deliveryAddress.trim() : '',
+          suburb: fulfillment === 'delivery' ? suburb.trim() : '',
+          cardMessage: cardMessage.trim(),
+          specialInstructions: specialInstructions.trim(),
+        }),
+      });
+
+      const payment = (await response.json().catch(() => null)) as {
+        processUrl?: string;
+        fields?: Record<string, string>;
+        reference?: string;
+        subtotal?: number;
+        amount?: number;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !payment?.processUrl || !payment.fields || !payment.reference) {
+        throw new Error(
+          payment?.error || 'Could not start the PayFast payment. Please try again.'
+        );
+      }
+
+      const order: ConfirmedOrder = {
+        reference: payment.reference,
+        createdAt: new Date().toLocaleString('en-ZA'),
+        fulfillment,
+        deliveryDate,
+        timeWindow: windowLabel,
+        senderName: senderName.trim(),
+        senderPhone: senderPhone.trim(),
+        senderEmail: senderEmail.trim(),
+        recipientName: fulfillment === 'delivery' ? recipientName.trim() : undefined,
+        recipientPhone: fulfillment === 'delivery' ? recipientPhone.trim() : undefined,
+        deliveryAddress: fulfillment === 'delivery' ? deliveryAddress.trim() : undefined,
+        suburb: fulfillment === 'delivery' ? suburb.trim() : undefined,
+        cardMessage: cardMessage.trim() || undefined,
+        specialInstructions: specialInstructions.trim() || undefined,
+        items: [...items],
+        addons: selectedAddons,
+        subtotalZAR: payment.subtotal ?? subtotal,
+        totalZAR: payment.amount ?? orderTotal,
+      };
+
+      // Keep the order summary for the page PayFast returns to.
+      try {
+        window.sessionStorage.setItem(
+          `nonise_pending_order_${order.reference}`,
+          JSON.stringify(order)
+        );
+      } catch {
+        // Ignore storage errors in private contexts
+      }
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = payment.processUrl;
+      Object.entries(payment.fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      setPaymentError(
+        error instanceof Error ? error.message : 'Could not start the PayFast payment.'
+      );
+      setIsRedirecting(false);
+    }
   };
 
   if (confirmedOrder) {
     const itemsSummary = confirmedOrder.items
-      .map((i) => `${i.quantity}x ${i.product.name} (${formatZAR(i.product.priceZAR * i.quantity)})`)
+      .map(
+        (i) =>
+          `${i.quantity}x ${i.product.name}${i.color ? ` (${i.color})` : ''} (${formatZAR(
+            i.product.priceZAR * i.quantity
+          )})`
+      )
       .join(', ');
     const addonsSummary = confirmedOrder.addons
       ?.map((addon) => `${addon.label} (${formatZAR(addon.priceZAR)})`)
       .join(', ');
+    const orderAddonsTotal = (confirmedOrder.addons ?? []).reduce(
+      (sum, addon) => sum + addon.priceZAR,
+      0
+    );
+    const orderDeliveryFee =
+      confirmedOrder.totalZAR - confirmedOrder.subtotalZAR - orderAddonsTotal;
     const summaryText = [
       `Nonise Florist Order Request #${confirmedOrder.reference}`,
       `Items: ${itemsSummary}`,
       addonsSummary ? `Add-ons: ${addonsSummary}` : '',
       `Subtotal: ${formatZAR(confirmedOrder.subtotalZAR)}`,
+      `Delivery: ${
+        confirmedOrder.fulfillment === 'collection'
+          ? 'Studio collection (complimentary)'
+          : orderDeliveryFee === 0
+          ? 'Free'
+          : formatZAR(orderDeliveryFee)
+      }`,
       `Total: ${formatZAR(confirmedOrder.totalZAR)}`,
       `Fulfilment: ${
         confirmedOrder.fulfillment === 'delivery'
@@ -169,7 +289,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               <div className="space-y-1.5">
                 <div className="inline-flex items-center gap-2 text-[#3E5B42]">
                   <Check className="w-5 h-5" aria-hidden="true" />
-                  <span className="eyebrow">Order Request Recorded</span>
+                  <span className="eyebrow">Payment Submitted to PayFast</span>
                 </div>
                 <h1 className="font-editorial text-[30px] sm:text-[36px] text-[#2F1B2E]">
                   Order #{confirmedOrder.reference}
@@ -189,10 +309,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             </div>
 
             <div className="p-4 bg-[#F7EFE3] border border-[#C5A059]/40 rounded-sm text-[13px] text-[#3D3A39] leading-relaxed">
-              <strong className="text-[#2F1B2E]">Next Step — Complete Payment With Studio:</strong>{' '}
-              Online card payment gateway credentials are not yet connected on this preview. Send
-              your confirmed order reference directly to Nonise Florist via WhatsApp or Email below
-              to receive EFT / payment confirmation and confirm local delivery fee.
+              <strong className="text-[#2F1B2E]">Payment submitted to PayFast:</strong> Your order
+              is confirmed once PayFast reports the payment as complete. Send this order summary to
+              Nonise Florist via WhatsApp or Email below so we can prepare and schedule your
+              flowers.
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[14px]">
@@ -237,6 +357,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   <li key={item.cartKey} className="py-2.5 flex items-center justify-between gap-4">
                     <span className="text-[#2F1B2E]">
                       {item.quantity} &times; {item.product.name}
+                      {item.color ? ` — ${item.color}` : ''}
                     </span>
                     <span className="font-semibold text-[#1B1C1A] tabular-price">
                       {formatZAR(item.product.priceZAR * item.quantity)}
@@ -257,14 +378,24 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   <span>Arrangements Subtotal</span>
                   <span className="tabular-price">{formatZAR(confirmedOrder.subtotalZAR)}</span>
                 </div>
-                {confirmedOrder.addons && confirmedOrder.addons.length > 0 && (
+                {orderAddonsTotal > 0 && (
                   <div className="flex items-center justify-between text-[#584144]">
                     <span>Add-ons</span>
-                    <span className="tabular-price">
-                      {formatZAR(confirmedOrder.totalZAR - confirmedOrder.subtotalZAR)}
-                    </span>
+                    <span className="tabular-price">{formatZAR(orderAddonsTotal)}</span>
                   </div>
                 )}
+                <div className="flex items-center justify-between text-[#584144]">
+                  <span>
+                    {confirmedOrder.fulfillment === 'collection' ? 'Studio Collection' : 'Local Delivery'}
+                  </span>
+                  <span className={orderDeliveryFee === 0 ? 'font-medium text-[#3E5B42]' : ''}>
+                    {confirmedOrder.fulfillment === 'collection'
+                      ? 'Complimentary'
+                      : orderDeliveryFee === 0
+                      ? 'Free'
+                      : formatZAR(orderDeliveryFee)}
+                  </span>
+                </div>
                 <div className="pt-1.5 border-t border-[#EFE8DC] flex items-center justify-between text-[16px] font-semibold text-[#2F1B2E]">
                   <span>Order Total</span>
                   <span className="tabular-price">{formatZAR(confirmedOrder.totalZAR)}</span>
@@ -376,7 +507,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     <span>Pietermaritzburg Delivery</span>
                   </div>
                   <p className="text-[12px] text-[#584144] mt-1.5">
-                    Hand-delivered across Pietermaritzburg &amp; surrounding suburbs.
+                    Hand-delivered across Pietermaritzburg &amp; surrounding suburbs. Flat R100,
+                    free on orders from R2,500.
                   </p>
                 </button>
 
@@ -703,7 +835,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     <p className="font-editorial text-[16px] text-[#2F1B2E] truncate">
                       {item.product.name}
                     </p>
-                    <p className="text-[12px] text-[#584144]">Qty {item.quantity}</p>
+                    <p className="text-[12px] text-[#584144]">
+                      Qty {item.quantity}
+                      {item.color ? ` · Colour: ${item.color}` : ''}
+                    </p>
                   </div>
                   <span className="text-[14px] font-semibold text-[#1B1C1A] tabular-price shrink-0">
                     {formatZAR(item.product.priceZAR * item.quantity)}
@@ -736,6 +871,16 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                             onChange={() => toggleAddon(addon.id)}
                             className="w-4 h-4 accent-[#3E5B42]"
                           />
+                          {addon.image && (
+                            <img
+                              src={addon.image}
+                              alt=""
+                              width={32}
+                              height={32}
+                              loading="lazy"
+                              className="w-8 h-8 rounded-sm object-cover border border-[#EFE8DC]"
+                            />
+                          )}
                           <span className="text-[13px] text-[#2F1B2E]">{addon.label}</span>
                         </span>
                         <span className="text-[13px] font-semibold text-[#1B1C1A] tabular-price">
@@ -766,37 +911,61 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               )}
               <div className="flex justify-between text-[#584144]">
                 <span>
-                  {fulfillment === 'collection' ? 'Studio Collection' : 'Local Delivery Fee'}
+                  {fulfillment === 'collection' ? 'Studio Collection' : 'Local Delivery'}
                 </span>
                 <span className="font-medium text-[#3E5B42]">
                   {fulfillment === 'collection'
                     ? 'Complimentary'
-                    : 'Confirmed by suburb'}
+                    : deliveryFee === 0
+                    ? 'Free'
+                    : formatZAR(deliveryFee)}
                 </span>
               </div>
               <div className="pt-3 border-t border-[#EFE8DC] flex justify-between text-[17px] font-semibold text-[#2F1B2E]">
-                <span>Estimated Total</span>
+                <span>Order Total</span>
                 <span className="tabular-price">{formatZAR(orderTotal)}</span>
               </div>
             </div>
 
-            {/* Honest Payment Integration Notice */}
             <div className="p-4 bg-[#FDFBF7] border border-[#EFE8DC] rounded-sm flex items-start gap-2.5 text-[12px] leading-relaxed text-[#584144]">
               <Info className="w-4 h-4 text-[#C5A059] shrink-0 mt-0.5" aria-hidden="true" />
               <p>
-                <strong className="text-[#2F1B2E]">Payment Integration Point:</strong> Live online
-                payment processing (WooCommerce / PayFast / Yoco) is ready to connect when merchant
-                credentials are supplied. Submitting below generates your confirmed Order Reference
-                for direct studio payment via EFT or WhatsApp.
+                <strong className="text-[#2F1B2E]">Secure Payment via PayFast:</strong> You will be
+                redirected to PayFast to pay by card or Instant EFT. Your order is confirmed once
+                PayFast reports the payment. Local delivery is a flat R100, free on orders from
+                R2,500.
               </p>
             </div>
 
+            {paymentNotice && (
+              <p
+                role="status"
+                className="p-4 bg-[#F7EFE3] border border-[#C5A059]/40 rounded-sm text-[12px] leading-relaxed text-[#3D3A39]"
+              >
+                {paymentNotice}
+              </p>
+            )}
+            {paymentError && (
+              <p
+                role="alert"
+                className="p-4 bg-[#FDF1F3] border border-[#D84A6A]/30 rounded-sm text-[12px] leading-relaxed text-[#8A2438]"
+              >
+                {paymentError}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="btn-editorial w-full py-3.5 px-6 rounded-sm bg-[#D84A6A] text-white text-[14px] font-semibold tracking-[0.04em] hover:bg-[#C43D5C] cursor-pointer"
+              disabled={isRedirecting}
+              className="btn-editorial w-full py-3.5 px-6 rounded-sm bg-[#D84A6A] text-white text-[14px] font-semibold tracking-[0.04em] hover:bg-[#C43D5C] disabled:opacity-60 disabled:cursor-wait cursor-pointer"
             >
-              Confirm Order Request &middot; {formatZAR(orderTotal)}
+              {isRedirecting
+                ? 'Redirecting to PayFast…'
+                : `Pay Securely with PayFast · ${formatZAR(orderTotal)}`}
             </button>
+            <p className="text-center text-[11px] text-[#8B7073]">
+              Free local delivery on orders from R2,500.
+            </p>
           </aside>
         </form>
       </div>

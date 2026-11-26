@@ -10,7 +10,9 @@ export type PageView =
 
 export type SpecialtyKey =
   | 'all'
+  | 'basket-arrangements'
   | 'box-arrangements'
+  | 'extras'
   | 'funeral-flowers'
   | 'funeral-package-sets'
   | 'hampers'
@@ -37,12 +39,15 @@ export interface Product {
   inStock: boolean;
   featured?: boolean;
   badgeText?: string;
+  /** Shopper-selectable options shown on the product page, e.g. rose colours. */
+  colorOptions?: string[];
 }
 
 export interface CartItem {
   cartKey: string;
   product: Product;
   quantity: number;
+  color?: string;
   giftMessage?: string;
   deliveryDate?: string;
 }
@@ -73,8 +78,10 @@ export type GalleryCollection =
   | 'Mixed Bouquets'
   | 'Protea Bouquets'
   | 'Vase Arrangements'
+  | 'Basket Arrangements'
   | 'Box Arrangements'
   | 'Gift Hampers'
+  | 'Extras'
   | 'Funeral & Sympathy'
   | 'Weddings & Events';
 
@@ -114,4 +121,5 @@ export interface CheckoutAddon {
   priceZAR: number;
   /** Studio price list quotes this add-on as "from" this amount. */
   fromPrice?: boolean;
+  image?: string;
 }

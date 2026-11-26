@@ -345,7 +345,11 @@
 }
 
 .drawer-panel-right {
-  transition: transform 340ms var(--ease-editorial);
+  /* Tailwind v4 positions these panels with the `translate` property, so it
+     must be named here or the slide never animates. */
+  transition:
+    transform 340ms var(--ease-editorial),
+    translate 340ms var(--ease-editorial);
 }
 
 /* ==========================================================================
