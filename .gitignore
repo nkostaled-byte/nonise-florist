@@ -3,6 +3,7 @@ build/
 dist/
 coverage/
 .artifacts/
+.wrangler/
 .DS_Store
 *.log
 .env*
