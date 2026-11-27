@@ -78,6 +78,20 @@ Legend: `[x]` done · `[ ]` still open
 - [x] Photograph converted to WebP with a 640px responsive version.
 - [x] Existing mission, vision and brand-story copy retained.
 
+## 9. Dashboard-Managed Products (in progress)
+
+- [x] Products save straight to Supabase from the business dashboard (`PUT /api/dashboard/products/:id`); saving never triggers a site build.
+- [x] One "Publish changes" button starts a single build for all pending edits, with a 2-minute debounce (`POST /api/publish`, `client_sites` table).
+- [x] Inventory-only accounts are gated by `clients.website_url` and never see the publish control.
+- [x] Storefront columns added to `products`: `slug`, `description`, `whats_included` (`add_product_storefront_columns.sql`).
+- [x] Dashboard product form can set slug, description and what's included.
+- [ ] **Seed the catalogue.** Insert the 91 products into Supabase with their existing slugs copied verbatim from `src/data/noniseData.ts`. Do not derive slugs from names — that breaks every indexed URL.
+- [ ] **Seed script: photo upload + `image_url` in one pass.** For each product, upload `public/assets/nonise/<slug>.webp` to R2 at `clients/nonise-florist/products/<slug>.webp` and set `image_url = <R2_PUBLIC_URL>/clients/nonise-florist/products/<slug>.webp` on the inserted row. Use the R2 S3 API (`@aws-sdk/client-s3`) with R2 credentials rather than `/api/upload`, because that endpoint needs a Supabase login and the Nonise client row has `auth_user_id = NULL`. Deterministic keys (`<slug>.webp`, not a UUID) keep the script re-runnable.
+- [ ] **Storefront reads the API.** `scripts/prerender.ts` should fetch `/api/public/site?clientId=nonise-florist` at build time and generate product pages and `sitemap.xml` from it, falling back to the hardcoded `PRODUCTS` list if the API is empty or unreachable. Product URLs stay `/product/<slug>`.
+- [ ] Replace `select=*` in `GET /api/public/site` with a column allowlist so `cost_price`, `stock_qty`, `low_stock_warning` and `barcode` stop being public.
+- [ ] Serve product images through Cloudflare image transforms (`/cdn-cgi/image/width=640,format=webp/...`) so R2 originals are not shipped at full size; use a 1200x630 JPEG transform for the OG image.
+- [ ] Add a `_headers` file (or Worker rule) giving `/assets/*` a real `Cache-Control`, instead of the default `max-age=0, must-revalidate`.
+
 ## What Is Still Needed From the Client
 
 1. **Add-ons** — confirm brands/sizes and whether the “from” prices should remain the base amounts charged.
